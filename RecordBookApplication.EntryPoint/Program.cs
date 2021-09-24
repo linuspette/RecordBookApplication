@@ -8,14 +8,13 @@ namespace RecordBookApplication.EntryPoint
         static void Main(string[] args)
         {
             //User Input
-            List<double> grades = new List<double>() { 45.7, 69.0, 56.8, 90.8, 78.9 };
+            var menu = new Menu();
+            menu.Run();
+            Console.ReadKey();
 
             //Todo Implement CalcAverge feature
-            List<double> myList = new List<double>() { 23.4, 34.5, 65.6 };
-            //Console.WriteLine(CalcAverage(myList));
-            Book book = new Book();
-            book.AddRecord(new RecordBook() { Student = new Student() { Id = 1, Name = "Ralph", Grades = grades } });
 
+            //Console.WriteLine(CalcAverage(myList));
 
 
 
@@ -26,21 +25,22 @@ namespace RecordBookApplication.EntryPoint
             //Create method to print any List
 
             //Create Helper class for Sorting & Searching
+
         }
 
 
     
 
-        private static void InsertionSort(List<double> records)
+        private static void InsertionSort()
         {
         }
 
-        private static int BinarySearch(List<double> records, double searchItem)
+        private static int BinarySearch()
         {
             return -1;
         }
 
-        private static void PrintRecordsList(List<double> records)
+        private static void PrintRecordsList()
         {
             
         }

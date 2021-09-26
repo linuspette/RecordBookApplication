@@ -10,6 +10,8 @@ namespace RecordBookApplication.EntryPoint
             //User Input
             var menu = new Menu();
             menu.Run();
+            Console.Clear();
+            Console.WriteLine("Press any key to close the program...");
             Console.ReadKey();
 
             //Todo Implement CalcAverge feature
@@ -28,27 +30,9 @@ namespace RecordBookApplication.EntryPoint
 
         }
 
-
-    
-
-        private static void InsertionSort()
-        {
-        }
-
         private static int BinarySearch()
         {
             return -1;
-        }
-
-        private static void PrintRecordsList()
-        {
-            
-        }
-
-
-
-       
-
-        
+        }  
     }
 }

@@ -38,12 +38,33 @@ namespace RecordBookApplication.EntryPoint
 
         public void UI()
         {
-            bool validSelection = false;
-            string userinput = "";
+            bool validInput = false;
+            int userinput = 99;
 
-            while (userinput != "0")
+            while (userinput != 0)
             {
-
+                do
+                {
+                    try
+                    {
+                        userinput = int.Parse(Console.ReadLine());
+                        validInput = true;
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Please enter a valid input.");
+                        validInput = false;
+                    }
+                } while (!validInput);
+                switch (userinput)
+                {
+                    case 1: AddStudent(); break;
+                    case 2: AddRandomStudent(); break;
+                    case 3: PrintStudents(); AwaitUserInput(); break;
+                    case 4: InitiateSort(); AwaitUserInput(); break;
+                    case 0: break;
+                    default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
+                }
             }
         }
         public void AddStudent()
@@ -147,13 +168,89 @@ namespace RecordBookApplication.EntryPoint
             {
                 sw.WriteLine(userInput);
             }
+            Console.WriteLine("Random student added. Press any key to continue...");
+            Console.ReadKey();
         }
+        public void InitiateSort()
+        {
+            InsertionSort(studentData, "Name");
+            ClearFile();
+            WriteToFile();
+        }
+        public List<Student> InsertionSort(List<Student> _studentData, string _getInfo)
+        {
+            int i, j;
+            string getInfo = _getInfo;
+            switch (getInfo)
+            {
+                case "ID":
+                    for (i = 1; i < _studentData.Count; i++)
+                    {
+                        for (j = i; j > 0; j--)
+                        {
+                            if (_studentData[j].GetID() < _studentData[j -1].GetID())
+                            {
+                                var tmp = _studentData[j - 1];
+                                _studentData[j-1] = _studentData[j];
+                                _studentData[j] = tmp;
+                            }
+                        }
+                    }
+                    break;                
+                case "Name":
+                    _studentData.Sort((x, y) => string.Compare(x.GetName(), y.GetName()));
+                    break;                
+                
+                case "Subject":
+                    _studentData.Sort((x, y) => string.Compare(x.GetSubject(), y.GetSubject()));
+                    break;
+                case "Grade":
+                    for (i = 1; i < _studentData.Count; i++)
+                    {
+                        for (j = i; j > 0; j--)
+                        {
+                            if (_studentData[j].GetGrade() < _studentData[j - 1].GetGrade())
+                            {
+                                var tmp = _studentData[j - 1];
+                                _studentData[j - 1] = _studentData[j];
+                                _studentData[j] = tmp;
+                            }
+                        }
+                    }
+                    break;
 
+            }
+            return _studentData;
+        }
         public void PrintStudents()
         {
             foreach (var item in studentData)
             {
                 Console.WriteLine(item);
+            }
+        }
+        public void AwaitUserInput()
+        {
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+            Console.Clear();
+        }
+        private void ClearFile()
+        {
+            using (TextWriter tw = new StreamWriter(data, false))
+            {
+                tw.Write(string.Empty);
+            }
+        }
+        private void WriteToFile()
+        {
+            using (StreamWriter sw = File.AppendText(data))
+            {
+                for (int i = 0; i < studentData.Count; i++)
+                {
+                    string userInput = $"{studentData[i].GetID()},{studentData[i].GetName()},{studentData[i].GetSubject()},{studentData[i].GetGrade()}";
+                    sw.WriteLine(userInput);
+                }
             }
         }
 

@@ -11,6 +11,7 @@ namespace RecordBookApplication.EntryPoint
         string savedSubjects = "subjectDatabase.txt";
         string data = "studentDatabase.txt";
         string statisticsData = "statisticsDatabase.txt";
+        string usersData = "users.txt";
 
 
         List<Student> studentData = new List<Student>();
@@ -22,6 +23,43 @@ namespace RecordBookApplication.EntryPoint
         {
             Console.WriteLine("Looking for existing databases...");
             FakeLoading();
+
+            //Checks if users database exist.
+            if (File.Exists(usersData))
+            {
+                Console.WriteLine("Database containing users exists. Loading data...");
+                FakeLoading();
+                int error = 0; //Calculates eventually errors
+                using (StreamReader file = new StreamReader(usersData))
+                {
+                    int amountOfLines = File.ReadLines(usersData).Count(); //Calculates amount of lines in the txt-file
+
+                    if (amountOfLines == 0)
+                    {
+                        file.Close();
+                        Console.WriteLine("There's no users in database.");
+                        CreateAdmin("Please create your first admin account");
+                        Console.WriteLine("\nResuming to load data");
+                        FakeLoading();
+                    }
+
+                    if (error != 0)
+                    {
+                        Console.WriteLine("There was a problem when reading the data from the database.");
+                        Console.WriteLine($"Total errors found: {error}");
+                    }
+                }
+            }
+            //If users database doesn't exists,
+            //a new database is created amd user will be prompted to create a new administrator
+            else
+            {
+                using (File.Create(usersData)) { };
+                Console.WriteLine("No users database found. Creating new database...");
+                CreateAdmin("No administrator has been registered please do so now:");
+                Console.WriteLine("\nResuming to load data");
+                FakeLoading();
+            }
 
             //Checks if subjects database exist.
             //If it exists, data will be written to corresponding lists
@@ -196,9 +234,12 @@ namespace RecordBookApplication.EntryPoint
                         Console.WriteLine("There was a problem when reading the data from the database.");
                         Console.WriteLine($"Total errors found: {error}");
                     }
+                    Console.Clear();
+                    Console.WriteLine("Initializing");
                     FakeLoading();
+
                 }
-                UI();
+                MainMenu();
             }
 
             //If student database doesn't exists, creates a new database
@@ -208,13 +249,13 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine("No students database found. Creating new database...");
                 FakeLoading();
                 Console.Clear();
-                UI();
+                MainMenu();
             }
         }
 
 
         //Menu interactions
-        public void UI() //User UI for menu
+        public void MainMenu() //User UI for menu
         {
             string userinput = "";
 
@@ -225,18 +266,11 @@ namespace RecordBookApplication.EntryPoint
                 userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "1": AddStudent(); break;
-                    case "2": AddRandomStudent(); break;
-                    case "3": PrintStudents(); AwaitUserInput(); break;
-                    case "4": SortMenu(); AwaitUserInput(); break;
-                    case "5": AddAdditionalGrade(); AwaitUserInput(); break;
-                    case "6": DeleteGrade(); AwaitUserInput(); break;
-                    case "7": DeleteStudent(); AwaitUserInput(); break;
-                    case "8": AddSubject(); AwaitUserInput(); break;
-                    case "9": DeleteSubject(); AwaitUserInput(); break;
-                    case "10": PrintSubjects(); AwaitUserInput(); break;
-                    case "11": AddRandomSubject(); AwaitUserInput(); break;
-                    case "12": Console.Clear(); StatisticsMenu(); AwaitUserInput(); break;
+                    case "1": StudentsMenu(); break;
+                    case "2": SubjectsMenu(); break;
+                    case "3": StatisticsMenu(); break;
+                    case "4": SortMenu(); break;
+                    case "5": AdminMenu(); break;
                     case "0": break;
                     default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
                 }
@@ -247,22 +281,102 @@ namespace RecordBookApplication.EntryPoint
             Console.Clear();
             Console.WriteLine(" ---- MENU ---- ");
             Console.WriteLine($"\n - Amount of Students: {studentData.Count} -");
-            Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n");
-            Console.WriteLine("1 - Add new student");
-            Console.WriteLine("2 - Add new randomized student");
-            Console.WriteLine("3 - Show all students");
+            Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n\n");
+            Console.WriteLine("1 - Run Students Manager");
+            Console.WriteLine("2 - Subjects Manager");
+            Console.WriteLine("3 - Open Statistics");
             Console.WriteLine("4 - Sort data");
-            Console.WriteLine("5 - Add additional grade to student");
-            Console.WriteLine("6 - Delete grade from student");
-            Console.WriteLine("7 - Delete student profile");
-            Console.WriteLine("8 - Add subject");
-            Console.WriteLine("9 - Delete subject");
-            Console.WriteLine("10 - Show all subjects");
-            Console.WriteLine("11 - Add randomized subject");
-            Console.WriteLine("12 - Open Statistics");
-            Console.WriteLine("0 - Close program");
+            Console.WriteLine("5 - Administrate");
+            Console.WriteLine("\n0 - Close program\n");
         }
-        public void StatisticsMenu()
+
+
+        public void StudentsMenu()//User UI for stundents
+        {
+            string userinput = "";
+
+            while (userinput != "0")
+            {
+                PrintStudentMenu();
+
+                userinput = Console.ReadLine();
+
+                switch (userinput)
+                {
+                    case "1": AddStudent(); break;
+                    case "2": PrintStudents(); AwaitUserInput(); break;
+                    case "3": AddAdditionalGrade(); AwaitUserInput(); break;
+                    case "4": DeleteGrade(); AwaitUserInput(); break;
+                    case "5": DeleteStudent(); AwaitUserInput(); break;
+                    case "0": break;
+                    default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
+                }
+            }
+        }
+        public void PrintStudentMenu()
+        {
+            Console.Clear();
+            Console.WriteLine(" ---- STUDENTS MANAGER ---- \n");
+            Console.WriteLine($"\n - Amount of Students: {studentData.Count} -\n");
+            Console.WriteLine("1 - Add new student");
+            Console.WriteLine("2 - Show all students");
+            Console.WriteLine("3 - Add additional grade to student");
+            Console.WriteLine("4 - Delete grade from student");
+            Console.WriteLine("5 - Delete student profile");
+            Console.WriteLine("\n0 - Return to main menu\n");
+
+        }
+        public void PrintStudents()//Prints the list containing students in console
+        {
+            Console.Clear();
+            foreach (var item in studentData)
+            {
+                Console.WriteLine(item);
+            }
+        }
+
+
+        public void SubjectsMenu()//User UI for subjects
+        {
+            string userinput = "";
+
+            while (userinput != "0")
+            {
+                PrintSubjectsMenu();
+
+                userinput = Console.ReadLine();
+
+                switch (userinput)
+                {
+                    case "1": AddSubject(); AwaitUserInput(); break;
+                    case "2": DeleteSubject(); AwaitUserInput(); break;
+                    case "3": PrintSubjects(); AwaitUserInput(); break;
+                    case "0": break;
+                    default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
+                }
+            }
+        }
+        public void PrintSubjectsMenu()
+        {
+            Console.Clear();
+            Console.WriteLine(" ---- SUBJECTS MANAGER ---- \n");
+            Console.WriteLine($"\n - Amount of Subjects: {subjectData.Count} -\n");
+            Console.WriteLine("1 - Add subject");
+            Console.WriteLine("2 - Delete subject");
+            Console.WriteLine("3 - Show all subjects");
+            Console.WriteLine("\n0 - Return to main menu\n");
+        }
+        public void PrintSubjects()//Prints the list containing subjects in console
+        {
+            Console.Clear();
+            foreach (var i in subjectData)
+            {
+                Console.WriteLine($"-{i}-");
+            }
+        }
+
+
+        public void StatisticsMenu()//User UI for statistics
         {
             string userinput = "";
 
@@ -284,28 +398,13 @@ namespace RecordBookApplication.EntryPoint
         }
         private void PrintStatisticsMenu()//Prints statistics menu
         {
-            Console.WriteLine(" ---- STATISTICS ---- ");
+            Console.Clear();
+            Console.WriteLine(" ---- STATISTICS ---- \n");
             Console.WriteLine("1 - Show all statistics");
             Console.WriteLine("2 - Show student with the lowest grade");
             Console.WriteLine("3 - Show student with the highest grade");
             Console.WriteLine("4 - Show the average grades");
-            Console.WriteLine("\n0 - Return to menu");
-        }
-        public void PrintStudents()//Prints the list containing students in console
-        {
-            Console.Clear();
-            foreach (var item in studentData)
-            {
-                Console.WriteLine(item);
-            }
-        }
-        public void PrintSubjects()//Prints the list containing subjects in console
-        {
-            Console.Clear();
-            foreach (var i in subjectData)
-            {
-                Console.WriteLine($"-{i}-");
-            }
+            Console.WriteLine("\n0 - Return to main menu\n");
         }
         public void PrintStatistics()//Prints the list containing statistics in console
         {
@@ -314,6 +413,123 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine(i);
             }
         }
+
+
+        public void SortMenu() //UI that lets user choose which data to sort
+        {
+            string userinput = "";
+            bool validSelection = false;
+
+            while (!validSelection && userinput != "0") //Checks which data user wants to sort after
+            {
+                PrintSortMenu();
+                userinput = Console.ReadLine();
+
+                switch (userinput)
+                {
+                    case "1": SortStudentMenu(); validSelection = true; break;
+                    case "2": SortGradesMenu(); validSelection = true; break;
+                    case "0": break;
+                    default: Console.Clear(); Console.WriteLine("Please select a valid option"); validSelection = false; break;
+                }
+            }
+            Console.Clear();
+        }
+        public void PrintSortMenu()
+        {
+            Console.Clear();
+            Console.WriteLine(" ---- SORTING ----- \n");
+            Console.WriteLine("1 - Student data");
+            Console.WriteLine("2 - Grades data");
+            Console.WriteLine("\n0 - Return to main menu\n");
+        }
+
+
+        private void AdminMenu()
+        {
+            string userinput = "";
+            bool credentialsAccepted = false;
+            bool validSelection = false;
+
+            while (!credentialsAccepted && userinput != "n")
+            {
+                string usernameInput = string.Empty;
+                var passwordInput = string.Empty;
+
+
+                Console.Clear();
+                Console.WriteLine("Please enter administrator credentials:");
+                Console.Write("Username: ");
+                usernameInput = Console.ReadLine();
+                Console.Write("Password: ");
+                passwordInput = MaskedReadLine();
+                Console.WriteLine();
+
+                credentialsAccepted = ValidateCredentials(usernameInput, passwordInput);
+
+                //If credentials are accepted, Admin panel will execute
+                if (credentialsAccepted == true)
+                {
+                    Console.Clear();
+                    Console.WriteLine("\nCredentials accepted");
+                    Thread.Sleep(1500);
+                    Console.WriteLine("\n ----WARNING---- ");
+                    Console.WriteLine("The admin panel should only be used by certified staff" +
+                        "\nas it can inflict strange behaviours and data losses.");
+                    Thread.Sleep(3000);
+
+                    while (userinput != "0")
+                    {
+                        PrintAdminMenu();
+
+                        userinput = Console.ReadLine();
+
+                        switch (userinput)
+                        {
+                            case "1": AddRandomStudent(); break;
+                            case "2": AddRandomSubject(); break;
+                            case "3": DeleteAllStudentData(); break;
+                            case "4": DeleteAllSubjectData(); break;
+                            case "5": DeleteAllStatisticsData(); break;
+                            case "0": break;
+                            default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
+                        }
+                    }
+                }
+                //If credentials are invalid, asks user to try again, or exit to menu
+                else
+                {
+                    Console.Clear();
+                    Console.WriteLine("The credentials that you have entered is invalid.");
+                    do
+                    {
+                        Console.WriteLine("Do you want to try again? y/n");
+                        userinput = Console.ReadLine();
+                        switch (userinput)
+                        {
+                            case "y": validSelection = true; Console.Clear(); break;
+                            case "n": validSelection = true; Console.Clear(); break;
+                            default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                        }
+                    } while (!validSelection);
+                }
+            }
+        }
+        private void PrintAdminMenu()
+        {
+            Console.Clear();
+            Console.WriteLine(" ---- ADMIN PANEL ---- \n");
+            Console.WriteLine($"\n - Amount of Students: {studentData.Count} -");
+            Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n");
+            Console.WriteLine("1 - Add random student");
+            Console.WriteLine("2 - Add random subject");
+            Console.WriteLine("3 - Delete all student data");
+            Console.WriteLine("4 - Delete all subject data");
+            Console.WriteLine("5 - Delete all statistics data");
+            Console.WriteLine("\n0 - Return to main menu\n");
+        }
+
+
         public void AwaitUserInput() //Awaits user input before continuing. Clears console
         {
             Console.WriteLine("\nPress any key to continue...");
@@ -387,6 +603,8 @@ namespace RecordBookApplication.EntryPoint
 
             int error = 0;
 
+            Console.Write($"Creating student");
+            Student.FakeLoading();
             int ID = rng.Next(11111, 99999);
 
             if (subjectData.Count != 0)
@@ -741,6 +959,276 @@ namespace RecordBookApplication.EntryPoint
         }
 
 
+        //Admin interactions
+        private void DeleteAllStudentData()//Deletes all student data both from database and list
+        {
+            bool validSelection = false;
+            do
+            {
+                Console.WriteLine("Are you sure you want to proceed?\nThe data will be lost forever. y/n");
+                string userinput = Console.ReadLine();
+                switch (userinput)
+                {
+                    case "y": validSelection = true; subjectData.Clear(); ClearFile(); Console.Clear(); break;
+                    case "n": validSelection = true; Console.Clear(); break;
+                    default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                }
+            } while (!validSelection);           
+        }
+        private void DeleteAllSubjectData()//Deletes all subject data both from database and list
+        {
+            bool validSelection = false;
+            do
+            {
+                Console.WriteLine("Are you sure you want to proceed?\nThe data will be lost forever. y/n");
+                string userinput = Console.ReadLine();
+                switch (userinput)
+                {
+                    case "y": validSelection = true; studentData.Clear(); ClearSubjectFile(); Console.Clear(); break;
+                    case "n": validSelection = true; Console.Clear(); break;
+                    default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                }
+            } while (!validSelection);           
+        }
+        private void DeleteAllStatisticsData()//Deletes all subject data both from database and list
+        {
+            bool validSelection = false;
+            do
+            {
+                Console.WriteLine("Are you sure you want to proceed?\nThe data will be lost forever. y/n");
+                string userinput = Console.ReadLine();
+                switch (userinput)
+                {
+                    case "y": validSelection = true; statisticData.Clear(); ClearStatisticsFile(); Console.Clear(); break;
+                    case "n": validSelection = true; Console.Clear(); break;
+                    default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                }
+            } while (!validSelection);     
+        }
+        private bool ValidateCredentials(string username, string password) //Validates user input credentials
+        {
+            string _username = string.Empty;
+            string _password = string.Empty;
+
+            bool validation = false;
+
+            if (File.Exists(savedSubjects))
+            {
+                Console.WriteLine("Checking Credentials");
+                FakeLoading();
+                int error = 0; //Calculates eventually errors
+                using (StreamReader file = new StreamReader(usersData))
+                {
+                    int rowsChecked = 0; //Keeps track of how many rows have been checked
+                    int amountOfLines = File.ReadLines(usersData).Count(); //Calculates amount of lines in the txt-file
+
+                    string line;
+                    string[] dataText;
+
+                    //Checks if there's any users saved in database
+                    if (amountOfLines == 0)
+                    {
+                        Console.WriteLine("There's no users in database.");
+                        Console.WriteLine("Please restart the application to resolve the issue");
+                    }
+                    else //Validates credentials
+                    {
+                        for (int Ind = 0; Ind < amountOfLines; Ind++)
+                        {
+                            line = File.ReadLines(usersData).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
+                            rowsChecked++;
+
+                            if (line != null)
+                            {
+                                try
+                                {
+                                    dataText = line.Split(',');
+                                    _username = dataText[1];
+                                    _password = Encryption.Decrypt(dataText[2]);
+                                }
+                                catch
+                                {
+                                    error++;
+                                }
+                            }
+
+                            if (username == _username && password == _password)
+                            {
+                                validation = true;
+                                break;
+                            }
+                            else
+                            {
+                                validation = false;
+                            }
+                        }
+                        if (error != 0)
+                        {
+                            Console.WriteLine("There was a problem when reading the data from the database.");
+                            Console.WriteLine($"Total errors found: {error}");
+                        }
+                    }
+                }
+            }
+
+            return validation;
+        }
+        private string MaskedReadLine()
+        {
+            var password = string.Empty;
+            ConsoleKey key;
+            do
+            {
+
+                var keyInfo = Console.ReadKey(intercept: true);
+                key = keyInfo.Key;
+
+                if (key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    Console.Write("\b \b");
+                    password = password[0..^1];
+                }
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    Console.Write("*");
+                    password += keyInfo.KeyChar;
+                }
+            } while (key != ConsoleKey.Enter);
+
+            return password;
+        }
+        private void CreateAdmin(string header)
+        {
+            string userinput = string.Empty;
+            string username = string.Empty;
+            bool validInput = false;
+
+            int ID = 0;
+
+            Random rng = new Random();
+
+            Console.Clear();
+            Console.WriteLine(header);
+
+            //Gives the user a unique ID
+            using (StreamReader file = new StreamReader(usersData))
+            {
+                int rowsChecked = 0; //Keeps track of how many rows have been checked
+                int amountOfLines = File.ReadLines(usersData).Count(); //Calculates amount of lines in the txt-file
+
+                string line;
+                string[] dataText;
+                bool validID = false;
+
+                //Checks the database if the ID is already taken
+                while (!validID)
+                {
+                    ID = rng.Next(11111, 99999);
+                    if (amountOfLines > 0)
+                    {
+                        for (int i = 0; i < amountOfLines; i++)
+                        {
+                            line = File.ReadLines(usersData).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
+                            rowsChecked++;
+
+                            if (line != null)
+                            {
+                                try
+                                {
+                                    dataText = line.Split(',');
+                                    if (ID != int.Parse(dataText[0]))
+                                    {
+                                        validID = true;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        validID = false;
+                                    }
+
+                                }
+                                catch
+                                {
+                                    validID = false;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        validID = true;
+                    }
+                }
+            }
+
+            //Lets user choose username
+            while (userinput != "y")
+            {
+                Console.WriteLine("Please enter a username:");
+                username = Console.ReadLine();
+
+                do
+                {
+                    Console.WriteLine($"Do you want the username to be \"{username}\"? y/n");
+                    userinput = Console.ReadLine().ToLower();
+                    switch (userinput)
+                    {
+                        case "y": validInput = true; break;
+                        case "n": validInput = true; break;
+                        default: Console.Clear(); Console.WriteLine("Invalid input. Try again."); validInput = false; break;
+                    }
+                } while (!validInput);
+            }
+
+            //Lets user choose password
+            string password1 = string.Empty;
+            string password2 = string.Empty;
+
+            do
+            {
+                Console.Clear();
+                Console.Write("Please type in a password: ");
+                password1 = MaskedReadLine();
+                Console.Write("\nPlease enter your password again: ");
+                password2 = MaskedReadLine();
+                Console.WriteLine("\n");
+
+                //If passwords doesn't match
+                if (password1 != password2)
+                {
+                    do
+                    {
+                        Console.WriteLine("The passwords didn't match. " +
+                            "\nDo you want to try again? y/n");
+                        userinput = Console.ReadLine().ToLower();
+                        switch (userinput)
+                        {
+                            case "y": validInput = true; break;
+                            case "n": validInput = true; break;
+                            default: Console.Clear(); Console.WriteLine("Invalid input. Try again."); validInput = false; break;
+                        }
+                    } while (!validInput);
+                }
+                //If passwords match - Writes to database
+                else if (password1 == password2)
+                {
+                    Console.WriteLine("User has been created.");
+                    Console.WriteLine();
+                    using (StreamWriter sw = File.AppendText(usersData))
+                    {
+                            string userInput = $"{ID},{username},{Encryption.Encrypt(password1)}";
+                            sw.WriteLine(userInput);
+                    }
+                }
+
+            } while (password1 != password2 && userinput != "n");
+        }
+        private void ConfigureAdmins()
+        {
+
+        }
+
+
         //File I/O
         private void ClearFile() //Clears student database
         {
@@ -806,29 +1294,6 @@ namespace RecordBookApplication.EntryPoint
 
 
         //Sorting mechanisms
-        public void SortMenu() //UI that lets user choose which data to sort
-        {
-            string userinput = "";
-            bool validSelection = false;
-
-            while (!validSelection) //Checks which data user wants to sort after
-            {
-                Console.Clear();
-                Console.WriteLine("Which data do you want to sort?");
-                Console.WriteLine("1 - Student data");
-                Console.WriteLine("2 - Grades data");
-
-                userinput = Console.ReadLine();
-
-                switch (userinput)
-                {
-                    case "1": SortStudentMenu(); validSelection = true; break;
-                    case "2": SortGradesMenu(); validSelection = true; break;
-                    default: Console.Clear(); Console.WriteLine("Please select a valid option"); validSelection = false; break;
-                }
-            }
-            Console.Clear();
-        }
         public void SortStudentMenu() //Menu that let's user choose how they want to sort the data
         {
             string userinput = "";
@@ -936,7 +1401,7 @@ namespace RecordBookApplication.EntryPoint
                             default: Console.WriteLine("Please choose a valid option."); validSelection = false; break;
                         }
                     } while (!validSelection);
-                    if (userInput == "2")
+                    if (userInput == "1")
                     {
                         for (i = 0; i < studentData.Count; i++)
                         {
@@ -950,8 +1415,6 @@ namespace RecordBookApplication.EntryPoint
 
 
         //Interacting with statistics
-
-        //Values used by methods
         private readonly double dash = 0, F = 0, E = 10, D = 12.5, C = 15, B = 17.5, A = 20; //Grade values
         private double dashCount = 0, fCount = 0, eCount = 0, dCount = 0, cCount = 0, bCount = 0, aCount = 0; //Counts how many grades of each type
         private void GetLowest()
@@ -1218,7 +1681,7 @@ namespace RecordBookApplication.EntryPoint
             for (int i = 0; i < 20; i++)
             {
                 Console.Write('.');
-                Thread.Sleep(100);
+                Thread.Sleep(75);
             }
             Console.WriteLine();
         }

@@ -350,7 +350,7 @@ namespace RecordBookApplication.EntryPoint
         {
             return string.Format($"ID: {ID} \nNamn: {name} \n{PrintGrades()}-----------------------------------------\n");
         }
-        private void FakeLoading()
+        public static void FakeLoading()
         {
             for (int i = 0; i < 20; i++)
             {

@@ -1,4 +1,4 @@
-﻿namespace RecordBookApplication.EntryPoint
+﻿ namespace RecordBookApplication.EntryPoint
 {
     public class Grades
     {

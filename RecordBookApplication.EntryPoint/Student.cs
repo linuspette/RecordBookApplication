@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace RecordBookApplication.EntryPoint
 {
@@ -9,17 +10,17 @@ namespace RecordBookApplication.EntryPoint
         private string name;
         private List<Grades> grades = new List<Grades>();
 
-        public Student(int _id, string _name, string command)
+        public Student(int _id, string _name, string command, List<Subjects> subjectData)
         {
             ID = _id;
             name = _name;
             if (command == "notRandom")
             {
-                AddGrades();
+                AddGrades(subjectData);
             }            
             if (command == "Random")
             {
-                RandomizeGrades();
+                RandomizeGrades(subjectData);
             }
             if (command == "initiating")
             {
@@ -43,17 +44,29 @@ namespace RecordBookApplication.EntryPoint
         {
             grades.Add(new Grades(gradeID, subject, grade));
         }
-        public void AddGrades() //Lets user add grades to the specific ID
+        public void AddGrades(List<Subjects> subjectData) //Lets user add grades to the specific ID
         {
             string[] acceptedGrades = new string[] { "A", "B", "C", "D", "E", "F", "-" };
             bool validSelection = false;
+            int subjectSelection = 0;
             string subject = "";
             string grade = "";
             Random rng = new Random();
 
+            string tryAgain = "";
+
             bool validID = false;
+            bool gradeExists = true;
 
             int gradeID = rng.Next(11111, 99999); //Randomizes userID. 
+
+            if (subjectData.Count == 0)
+            {
+                Console.Clear();
+                Console.WriteLine("There's no subjects available.\nAdd a subject via the main menu first.");
+                Thread.Sleep(2000);
+                tryAgain = "n";
+            }
 
             if (grades.Count != 0)
             {
@@ -72,56 +85,137 @@ namespace RecordBookApplication.EntryPoint
                         }
                     }
                 } while (!validID);
-            }//Makes sure that the ID ins't used by another grade. 
+            }//Makes sure that the ID isn't used by another grade. 
 
-            do //Checks which subject that should be graded
+            while (gradeExists && tryAgain != "n" && subjectData.Count != 0)
             {
-                Console.Clear();
-                Console.WriteLine("Choose a subject to grade:");
-                Console.WriteLine("1 - Swedish");
-                Console.WriteLine("2 - English");
-                Console.WriteLine("3 - Math");
-                Console.WriteLine("4 - Science");
-                Console.WriteLine("5 - Religion");
-                switch (subject = Console.ReadLine())
+                do //Checks which subject that should be graded
                 {
-                    case "1": subject = "Swedish"; validSelection = true; break;
-                    case "2": subject = "English"; validSelection = true; break;
-                    case "3": subject = "Math"; validSelection = true; break;
-                    case "4": subject = "Science"; validSelection = true; break;
-                    case "5": subject = "Religion"; validSelection = true; break;
-                    default: Console.WriteLine("Please choose a valid alternative."); validSelection = false; break;
-                }
-            } while (!validSelection);
-
-            do //Checks so that user did input a valid grade
-            {
-                Console.Clear();
-                Console.WriteLine("Set the grade");
-                Console.WriteLine("\nGrades that you can set:");
-                Console.WriteLine(" | A | | B | | C | | D | | E | | F | | - | ");
-
-                grade = Console.ReadLine().ToUpper();
-                for (int i = 0; i < acceptedGrades.Length; i++)
-                {
-                    if (grade == acceptedGrades[i].ToString())
+                    Console.Clear();
+                    Console.WriteLine("Please select the subject to be graded:");
+                    for (int i = 0; i < subjectData.Count; i++)
                     {
-                        validSelection = true;
+                        Console.WriteLine($"{i+1} - {subjectData[i]}");
                     }
-                }
 
-                if (validSelection)
+                    do
+                    {
+                        try
+                        {
+                            subjectSelection = int.Parse(Console.ReadLine());
+                            if(subjectSelection < 1)
+                            {
+                                validSelection = false;
+                                Console.WriteLine("Please choose a valid option.");
+                                Thread.Sleep(1000);
+                            }
+                            else
+                            {
+                                validSelection = true;
+                            }
+                        }
+                        catch
+                        {
+                            validSelection = false;
+                            Console.WriteLine("Please choose a valid option.");
+                            Thread.Sleep(1000);
+                        }
+                    } while (!validSelection);
+
+                    subject = subjectData[subjectSelection-1].GetSubjectName();
+
+                    for (int i = 0; i < subjectData.Count; i++)
+                    {
+                        if (subject == subjectData[i].GetSubjectName())
+                        {
+                            validSelection = true;
+                            break;
+                        }
+                        else
+                        {
+                            validSelection = false;
+                        }
+                    }
+
+                } while (!validSelection);
+
+                if (grades.Count != 0)
                 {
-                    grades.Add(new Grades(gradeID, subject, grade));
+                    for (int i = 0; i < grades.Count; i++)
+                    {
+                        if (subject == grades[i].GetGradeSubject())
+                        {
+                            Console.Clear();
+                            Console.WriteLine("This subject is already graded. Please delete the existing grade first.");
+                            Thread.Sleep(2000);
+                            gradeExists = true;
+                            do
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Do you want to try adding a grade again? y/n");
+
+                                switch (tryAgain = Console.ReadLine().ToLower())
+                                {
+                                    case "y":
+                                        Console.Clear();
+                                        validSelection = true;
+                                        break;
+                                    case "n": validSelection = true; break;
+                                    default: Console.Clear(); Console.WriteLine("Please choose a valid alternative.\nPress any key to continue..."); Console.ReadKey(); validSelection = false; break;
+                                }
+                            } while (!validSelection);
+                        }
+                        else
+                        {
+                            gradeExists = false;
+                        }
+                        if (gradeExists == true)
+                        {
+                            break;
+                        }
+                    }
                 }
                 else
                 {
-                    validSelection = false;
-                    Console.WriteLine("Please choose a valid alternative.");
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey();
+                    gradeExists = false;
                 }
-            } while (!validSelection);
+            }
+
+            if (gradeExists == false && subjectData.Count != 0)
+            {
+                do //Checks so that user did input a valid grade
+                {
+                    Console.Clear();
+                    Console.WriteLine("Set the grade");
+                    Console.WriteLine("\nGrades that you can set:");
+                    Console.WriteLine(" | A | | B | | C | | D | | E | | F | | - | ");
+
+                    grade = Console.ReadLine().ToUpper();
+                    for (int i = 0; i < acceptedGrades.Length; i++)
+                    {
+                        if (grade == acceptedGrades[i])
+                        {
+                            validSelection = true;
+                            break;
+                        }
+                        else
+                        {
+                            validSelection = false;
+                        }
+                    }
+
+                    if (validSelection)
+                    {
+                        grades.Add(new Grades(gradeID, subject, grade));
+                    }
+                    else
+                    {
+                        Console.WriteLine("Please choose a valid alternative.");
+                        Console.WriteLine("Press any key to continue...");
+                        Console.ReadKey();
+                    }
+                } while (!validSelection);
+            }
         }
         public void RemoveGrades()
         {
@@ -129,40 +223,48 @@ namespace RecordBookApplication.EntryPoint
             bool validSelection = false;
             int index = -1;
 
-            while (!validSelection)
+            if (grades.Count != 0)
             {
-                Console.WriteLine($"Available grades for {name}: ");
-                for (int i = 0; i < grades.Count; i++)
+                while (!validSelection)
                 {
-                    Console.WriteLine($"{grades[i].GetGradeID()} - {grades[i].GetGradeSubject()}: {grades[i].GetGradeGrade()}");
-                }
-                Console.WriteLine("\nPlease enter the ID of the grade you wish to remove: ");
-                try
-                {
-                    ID = int.Parse(Console.ReadLine());
-                    index = grades.FindIndex(a => a.GetGradeID() == ID);
-                    validSelection = true;
-                }
-                catch
-                {
-                    Console.Clear();
-                    Console.WriteLine("Please choose a valid ID.");
+                    Console.WriteLine($"Available grades for {name}: ");
+                    for (int i = 0; i < grades.Count; i++)
+                    {
+                        Console.WriteLine($"{grades[i].GetGradeID()} - {grades[i].GetGradeSubject()}: {grades[i].GetGradeGrade()}");
+                    }
+                    Console.WriteLine("\nPlease enter the ID of the grade you wish to remove: ");
+                    try
+                    {
+                        ID = int.Parse(Console.ReadLine());
+                        index = grades.FindIndex(a => a.GetGradeID() == ID);
+                        validSelection = true;
+                    }
+                    catch
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Please choose a valid ID.");
 
+                    }
+                    if (index == -1)
+                    {
+                        validSelection = false;
+                        Console.Clear();
+                        Console.WriteLine("Please choose a valid ID.");
+                    }
                 }
-                if (index == -1)
-                {
-                    validSelection = false;
-                    Console.Clear();
-                    Console.WriteLine("Please choose a valid ID.");
-                }
+                grades.RemoveAt(index);
             }
-            grades.RemoveAt(index);
+            else
+            {
+                Console.Clear();
+                Console.WriteLine("There's no grades to be removed.");
+                Thread.Sleep(2000);
+            }
         }
-        public void RandomizeGrades() //Adds a randomized grade to specific ID
+        public void RandomizeGrades(List<Subjects> subjectData) //Adds a randomized grade to specific ID
         {
 
             string[] _grades = new string[] { "A", "B", "C", "D", "E", "F", "-" }; //Array that contains valid grades
-            string[] _subjects = new string[] { "Swedish", "English", "Math", "Science", "Religion" }; //Array that contains valid subjects
 
             Random rng = new Random();
 
@@ -188,16 +290,14 @@ namespace RecordBookApplication.EntryPoint
                     }
                 } while (!validID);
             }//Makes sure that the ID ins't used by another grade. 
-
-            string subject = _subjects[rng.Next(0,5)];
+            int index = rng.Next(0, subjectData.Count);
+            string subject = subjectData[index].GetSubjectName();
             string grade = _grades[rng.Next(0,7)];
 
             grades.Add(new Grades(gradeID, subject, grade));
         }
         public List<String> GetGrades()
         {
-            string s = "";
-            string d = "";
             string gradeInfo = "";
 
             List<string> receivedInfo = new List<string>();
@@ -210,6 +310,18 @@ namespace RecordBookApplication.EntryPoint
             }
 
             return receivedInfo;
+        }
+        public void SortGradesBySubject()
+        {
+            grades.Sort((x, y) => string.Compare(x.GetGradeSubject(), y.GetGradeSubject()));
+        }        
+        public void SortGradesByGrade()
+        {
+            grades.Sort((x, y) => string.Compare(x.GetGradeGrade(), y.GetGradeGrade()));
+        }
+        public void ReverseSortedGrades()
+        {
+            grades.Reverse();
         }
         public string PrintGrades()//Prints grades
         {

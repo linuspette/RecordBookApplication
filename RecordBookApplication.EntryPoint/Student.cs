@@ -17,14 +17,14 @@ namespace RecordBookApplication.EntryPoint
             if (command == "notRandom")
             {
                 AddGrades(subjectData);
-            }            
+            }
             if (command == "Random")
             {
                 RandomizeGrades(subjectData);
             }
             if (command == "initiating")
             {
-
+                //In case I need to add something on startup
             }
 
         }
@@ -95,7 +95,7 @@ namespace RecordBookApplication.EntryPoint
                     Console.WriteLine("Please select the subject to be graded:");
                     for (int i = 0; i < subjectData.Count; i++)
                     {
-                        Console.WriteLine($"{i+1} - {subjectData[i]}");
+                        Console.WriteLine($"{i + 1} - {subjectData[i]}");
                     }
 
                     do
@@ -103,11 +103,11 @@ namespace RecordBookApplication.EntryPoint
                         try
                         {
                             subjectSelection = int.Parse(Console.ReadLine());
-                            if(subjectSelection < 1)
+                            if (subjectSelection < 1)
                             {
                                 validSelection = false;
                                 Console.WriteLine("Please choose a valid option.");
-                                Thread.Sleep(1000);
+                                FakeLoading();
                             }
                             else
                             {
@@ -118,11 +118,11 @@ namespace RecordBookApplication.EntryPoint
                         {
                             validSelection = false;
                             Console.WriteLine("Please choose a valid option.");
-                            Thread.Sleep(1000);
+                            FakeLoading();
                         }
                     } while (!validSelection);
 
-                    subject = subjectData[subjectSelection-1].GetSubjectName();
+                    subject = subjectData[subjectSelection - 1].GetSubjectName();
 
                     for (int i = 0; i < subjectData.Count; i++)
                     {
@@ -136,7 +136,6 @@ namespace RecordBookApplication.EntryPoint
                             validSelection = false;
                         }
                     }
-
                 } while (!validSelection);
 
                 if (grades.Count != 0)
@@ -147,7 +146,7 @@ namespace RecordBookApplication.EntryPoint
                         {
                             Console.Clear();
                             Console.WriteLine("This subject is already graded. Please delete the existing grade first.");
-                            Thread.Sleep(2000);
+                            FakeLoading();
                             gradeExists = true;
                             do
                             {
@@ -258,43 +257,47 @@ namespace RecordBookApplication.EntryPoint
             {
                 Console.Clear();
                 Console.WriteLine("There's no grades to be removed.");
-                Thread.Sleep(2000);
+                FakeLoading();
             }
         }
         public void RandomizeGrades(List<Subjects> subjectData) //Adds a randomized grade to specific ID
         {
 
             string[] _grades = new string[] { "A", "B", "C", "D", "E", "F", "-" }; //Array that contains valid grades
-
             Random rng = new Random();
-
             bool validID = false;
 
             int gradeID = rng.Next(11111, 99999); //Randomizes userID. 
 
-            if (grades.Count != 0)
+            Console.Write($"Creating student");
+            FakeLoading();
+
+            if (subjectData.Count != 0)
             {
-                do
+                if (grades.Count != 0)
                 {
-                    for (int i = 0; i < grades.Count; i++)
+                    do
                     {
-
-                        if (ID == grades[i].GetGradeID())
+                        for (int i = 0; i < grades.Count; i++)
                         {
-                            ID = rng.Next(11111, 99999);
-                        }
-                        else
-                        {
-                            validID = true;
-                        }
-                    }
-                } while (!validID);
-            }//Makes sure that the ID ins't used by another grade. 
-            int index = rng.Next(0, subjectData.Count);
-            string subject = subjectData[index].GetSubjectName();
-            string grade = _grades[rng.Next(0,7)];
 
-            grades.Add(new Grades(gradeID, subject, grade));
+                            if (ID == grades[i].GetGradeID())
+                            {
+                                ID = rng.Next(11111, 99999);
+                            }
+                            else
+                            {
+                                validID = true;
+                            }
+                        }
+                    } while (!validID);
+                }//Makes sure that the ID ins't used by another grade. 
+                int index = rng.Next(0, subjectData.Count);
+                string subject = subjectData[index].GetSubjectName();
+                string grade = _grades[rng.Next(0, 7)];
+
+                grades.Add(new Grades(gradeID, subject, grade));
+            }
         }
         public List<String> GetGrades()
         {
@@ -311,10 +314,20 @@ namespace RecordBookApplication.EntryPoint
 
             return receivedInfo;
         }
+        public List<string> GetGradesForStatistics()
+        {
+            List<string> gradesForStatistics = new List<string>();
+            for (int i = 0; i < grades.Count; i++)
+            {
+                gradesForStatistics.Add(new string(grades[i].GetGradeGrade()));
+            }
+
+            return gradesForStatistics;
+        }
         public void SortGradesBySubject()
         {
             grades.Sort((x, y) => string.Compare(x.GetGradeSubject(), y.GetGradeSubject()));
-        }        
+        }
         public void SortGradesByGrade()
         {
             grades.Sort((x, y) => string.Compare(x.GetGradeGrade(), y.GetGradeGrade()));
@@ -335,7 +348,17 @@ namespace RecordBookApplication.EntryPoint
         }
         public override string ToString() //Formats string
         {
-            return string.Format($"ID: {ID} \nNamn: {name} \n{PrintGrades()}");
+            return string.Format($"ID: {ID} \nNamn: {name} \n{PrintGrades()}-----------------------------------------\n");
         }
+        private void FakeLoading()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Console.Write('.');
+                Thread.Sleep(50);
+            }
+            Console.WriteLine();
+        }
+
     }
 }

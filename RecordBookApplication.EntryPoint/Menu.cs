@@ -10,20 +10,25 @@ namespace RecordBookApplication.EntryPoint
     {
         string savedSubjects = "subjectDatabase.txt";
         string data = "studentDatabase.txt";
-        Statistics statistics = new Statistics();
+        string statisticsData = "statisticsDatabase.txt";
+
+
         List<Student> studentData = new List<Student>();
         public List<Subjects> subjectData = new List<Subjects>();
-        public void Run() //Initiates program
+        //List that stores statistical data
+        private List<Statistics> statisticData = new List<Statistics>();
+
+        public void Run() //Initiates program and loads data from databases
         {
             Console.WriteLine("Looking for existing databases...");
-            Thread.Sleep(2000);
+            FakeLoading();
 
-            //Checks if database exist.
+            //Checks if subjects database exist.
             //If it exists, data will be written to corresponding lists
             if (File.Exists(savedSubjects))
             {
-                Console.WriteLine("Loading saved subjects");
-                //Thread.Sleep(2000);
+                Console.WriteLine("Database containing subjects exists. Loading data...");
+                FakeLoading();
                 int error = 0; //Calculates eventually errors
                 using (StreamReader file = new StreamReader(savedSubjects))
                 {
@@ -59,13 +64,69 @@ namespace RecordBookApplication.EntryPoint
                     }
                 }
             }
+            //If subject database doesn't exists, a new database is created
             else
             {
                 using (File.Create(savedSubjects)) { };
                 Console.WriteLine("No subjects database found. Creating new database...");
-                Thread.Sleep(2000);
+                FakeLoading();
             }
-            if (File.Exists(data)) 
+
+
+            //Checks if statistics database exist.
+            //If it exists, data will be written to corresponding lists
+            if (File.Exists(statisticsData))
+            {
+                Console.WriteLine("Database containing statistics exists. Loading data...");
+                FakeLoading();
+                int error = 0; //Calculates eventually errors
+                using (StreamReader file = new StreamReader(statisticsData))
+                {
+                    int rowsChecked = 0; //Keeps track of how many rows have been checked
+                    int amountOfLines = File.ReadLines(statisticsData).Count(); //Calculates amount of lines in the txt-file
+
+                    string line;
+                    string[] dataText;
+
+                    for (int Ind = 0; Ind < amountOfLines; Ind++)
+                    {
+                        line = File.ReadLines(statisticsData).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
+                        rowsChecked++;
+
+                        if (line != null)
+                        {
+                            try
+                            {
+                                dataText = line.Split(',');
+                                double points = double.Parse(dataText[2].ToString().Replace('.', ','));
+                                statisticData.Add(new Statistics(int.Parse(dataText[0]), dataText[1], points));
+                            }
+                            catch
+                            {
+                                error++;
+                            }
+                        }
+                    }
+
+                    if (error != 0)
+                    {
+                        Console.WriteLine("There was a problem when reading the data from the database.");
+                        Console.WriteLine($"Total errors found: {error}");
+                    }
+                }
+            }
+            //If subject database doesn't exists, a new database is created
+            else
+            {
+                using (File.Create(statisticsData)) { };
+                Console.WriteLine("No statistics database found. Creating new database...");
+                FakeLoading();
+            }
+
+
+            //Checks if students database exist.
+            //If it exists, data will be written to corresponding lists
+            if (File.Exists(data))
             {
                 Console.WriteLine("Database containing students exists. Loading data...");
                 int error = 0; //Calculates eventually errors
@@ -79,7 +140,7 @@ namespace RecordBookApplication.EntryPoint
                     string line;
                     string[] dataText;
 
-
+                    FakeLoading();
                     for (int Ind = 0; Ind < amountOfLines; Ind++)
                     {
                         line = File.ReadLines(data).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
@@ -135,25 +196,22 @@ namespace RecordBookApplication.EntryPoint
                         Console.WriteLine("There was a problem when reading the data from the database.");
                         Console.WriteLine($"Total errors found: {error}");
                     }
-                    Thread.Sleep(2000);
-
+                    FakeLoading();
                 }
                 UI();
             }
 
-            //If it doesn't exists, creates a new database
+            //If student database doesn't exists, creates a new database
             else
             {
                 using (File.Create(data)) { };
                 Console.WriteLine("No students database found. Creating new database...");
-                Thread.Sleep(2000);
+                FakeLoading();
                 Console.Clear();
                 UI();
             }
-
-
         }
-        
+
 
         //Menu interactions
         public void UI() //User UI for menu
@@ -178,21 +236,18 @@ namespace RecordBookApplication.EntryPoint
                     case "9": DeleteSubject(); AwaitUserInput(); break;
                     case "10": PrintSubjects(); AwaitUserInput(); break;
                     case "11": AddRandomSubject(); AwaitUserInput(); break;
+                    case "12": Console.Clear(); StatisticsMenu(); AwaitUserInput(); break;
                     case "0": break;
                     default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
                 }
             }
         }
-        public void AwaitUserInput() //Awaits user input before continuing. Clears console
-        {
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadKey();
-            Console.Clear();
-        }
         private void PrintMainMenu() //Prints menu
         {
             Console.Clear();
             Console.WriteLine(" ---- MENU ---- ");
+            Console.WriteLine($"\n - Amount of Students: {studentData.Count} -");
+            Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n");
             Console.WriteLine("1 - Add new student");
             Console.WriteLine("2 - Add new randomized student");
             Console.WriteLine("3 - Show all students");
@@ -204,7 +259,37 @@ namespace RecordBookApplication.EntryPoint
             Console.WriteLine("9 - Delete subject");
             Console.WriteLine("10 - Show all subjects");
             Console.WriteLine("11 - Add randomized subject");
+            Console.WriteLine("12 - Open Statistics");
             Console.WriteLine("0 - Close program");
+        }
+        public void StatisticsMenu()
+        {
+            string userinput = "";
+
+            while (userinput != "0")
+            {
+                PrintStatisticsMenu();
+
+                userinput = Console.ReadLine();
+                switch (userinput)
+                {
+                    case "1": PrintStatistics(); AwaitUserInput(); break;
+                    case "2": GetLowest(); AwaitUserInput(); break;
+                    case "3": GetHighest(); AwaitUserInput(); break;
+                    case "4": CalcAverage(); AwaitUserInput(); break;
+                    case "0": break;
+                    default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
+                }
+            }
+        }
+        private void PrintStatisticsMenu()//Prints statistics menu
+        {
+            Console.WriteLine(" ---- STATISTICS ---- ");
+            Console.WriteLine("1 - Show all statistics");
+            Console.WriteLine("2 - Show student with the lowest grade");
+            Console.WriteLine("3 - Show student with the highest grade");
+            Console.WriteLine("4 - Show the average grades");
+            Console.WriteLine("\n0 - Return to menu");
         }
         public void PrintStudents()//Prints the list containing students in console
         {
@@ -222,6 +307,20 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine($"-{i}-");
             }
         }
+        public void PrintStatistics()//Prints the list containing statistics in console
+        {
+            foreach (var i in statisticData)
+            {
+                Console.WriteLine(i);
+            }
+        }
+        public void AwaitUserInput() //Awaits user input before continuing. Clears console
+        {
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+            Console.Clear();
+        }
+
 
 
         //Subject interations
@@ -275,7 +374,7 @@ namespace RecordBookApplication.EntryPoint
             {
                 Console.WriteLine("Subject already exists.");
             }
-        }        
+        }
         public void AddRandomSubject()//Adds a subject
         {
             Console.Clear();
@@ -283,8 +382,8 @@ namespace RecordBookApplication.EntryPoint
             string addSubject = "";
             bool subjectExists = false;
             bool validID = false;
-            string[] subjectNames = new string[] {"Svenska", "Engelska", "Matte", "Naturvetenskap", "Samhälllskunskap", "Fysik", "Biologi" };
-            string[] subjectDifficulties = new string[] {"1a", "1b", "1c", "2a", "2b", "2c", "3a", "3b", "3c" };
+            string[] subjectNames = new string[] { "Svenska", "Engelska", "Matte", "Naturvetenskap", "Samhälllskunskap", "Fysik", "Biologi" };
+            string[] subjectDifficulties = new string[] { "1a", "1b", "1c", "2a", "2b", "2c", "3a", "3b", "3c" };
 
             int error = 0;
 
@@ -296,7 +395,6 @@ namespace RecordBookApplication.EntryPoint
                 {
                     for (int i = 0; i < subjectData.Count; i++)
                     {
-
                         if (ID == subjectData[i].GetSubjectID())
                         {
                             ID = rng.Next(11111, 99999);
@@ -369,7 +467,6 @@ namespace RecordBookApplication.EntryPoint
                     Console.Clear();
                     Console.WriteLine("Please choose a valid ID.");
                     AwaitUserInput();
-
                 }
                 if (index == -1)
                 {
@@ -392,12 +489,11 @@ namespace RecordBookApplication.EntryPoint
         public void AddStudent() //Function for adding a student
         {
             Random rng = new Random();
-
-
             bool validID = false;
 
             int ID = rng.Next(11111, 99999); //Randomizes userID. 
 
+            //Makes sure that the ID ins't used by another user. 
             if (studentData.Count != 0)
             {
                 do
@@ -415,7 +511,7 @@ namespace RecordBookApplication.EntryPoint
                         }
                     }
                 } while (!validID);
-            }//Makes sure that the ID ins't used by another user. 
+            }
 
             Console.WriteLine("Enter Name"); //Input for Username
             string name = Console.ReadLine();
@@ -441,41 +537,49 @@ namespace RecordBookApplication.EntryPoint
 
             int ID = rng.Next(11111, 99999); //Randomizes UserID
 
-
-            if (studentData.Count != 0) //Checks so that UserID isn't used by another user
+            Console.Clear();
+            if (subjectData.Count != 0)
             {
-                do
+                if (studentData.Count != 0) //Checks so that UserID isn't used by another user
                 {
-                    for (int i = 0; i < studentData.Count; i++)
+                    do
                     {
-
-                        if (ID == studentData[i].GetID())
+                        for (int i = 0; i < studentData.Count; i++)
                         {
 
+                            if (ID == studentData[i].GetID())
+                            {
+
+                            }
+                            else
+                            {
+                                validID = true;
+                            }
                         }
-                        else
-                        {
-                            validID = true;
-                        }
-                    }
-                } while (!validID);
+                    } while (!validID);
+                }
+
+                string name = names[rng.Next(0, 4)]; //Randomizes name from array
+
+                //Adds data to list
+                studentData.Add(new Student(ID, name, "Random", subjectData)); 
+                int index = studentData.FindIndex(a => a.GetID() == ID);
+                string userInput = $"{ID},{name},{string.Join(System.Environment.NewLine, studentData[index].GetGrades())}";
+
+                using (StreamWriter sw = File.AppendText(data)) //Adds data to datbase
+                {
+                    sw.WriteLine(userInput);
+                }
+                Console.Clear();
+                Console.WriteLine("Random student added. Press any key to continue...");
+                Console.ReadKey();
             }
-
-            string name = names[rng.Next(0, 4)]; //Randomizes name from array
-
-
-
-            studentData.Add(new Student(ID, name, "Random", subjectData)); //Adds data to list
-
-            int index = studentData.FindIndex(a => a.GetID() == ID);
-            string userInput = $"{ID},{name},{string.Join(System.Environment.NewLine, studentData[index].GetGrades())}";
-
-            using (StreamWriter sw = File.AppendText(data)) //Adds data to databse
+            else
             {
-                sw.WriteLine(userInput);
+                Console.Clear();
+                Console.WriteLine("No subjects exists. Please create a subject before adding a student.");
+                Console.ReadKey();
             }
-            Console.WriteLine("Random student added. Press any key to continue...");
-            Console.ReadKey();
         }
         private void DeleteStudent() //Function for deleting a student
         {
@@ -502,7 +606,6 @@ namespace RecordBookApplication.EntryPoint
                     Console.Clear();
                     Console.WriteLine("Please choose a valid ID.");
                     AwaitUserInput();
-
                 }
                 if (index == -1)
                 {
@@ -532,7 +635,6 @@ namespace RecordBookApplication.EntryPoint
                     text += $"{grades[i]}";
                 }
             }
-
             return text;
         }
         private void SendGradeData(int ID, string[] gradeData) //Sends stored Gradedata to the corresponding list
@@ -547,30 +649,50 @@ namespace RecordBookApplication.EntryPoint
             bool validSelection = false;
             int index = -1;
 
-            Console.WriteLine("Please choose which student you want to addd another grade to:");
-            for (int i = 0; i < studentData.Count; i++)
-            {
-                Console.WriteLine($"{studentData[i].GetName()}: {studentData[i].GetID()}");
-            }
-
             do
             {
+                Console.Clear();
+                Console.WriteLine("Please choose which student you want to add another grade to:");
+                for (int i = 0; i < studentData.Count; i++)
+                {
+                    Console.WriteLine($"{studentData[i].GetName()}: {studentData[i].GetID()}");
+                }
                 try
                 {
                     ID = int.Parse(Console.ReadLine());
-                    index = studentData.FindIndex(a => a.GetID() == ID);
-                    validSelection = true;
+                    if (ID <= 0)
+                    {
+                        validSelection = false;
+                        Console.Clear();
+                        Console.WriteLine("Please choose a valid ID.");
+                        AwaitUserInput();
+                    }
+                    else
+                    {
+                        for (int i = 0; i < studentData.Count; i++)
+                        {
+                            if (ID == studentData[i].GetID())
+                            {
+                                validSelection = true;
+                                index = studentData.FindIndex(a => a.GetID() == ID);
+                                break;
+                            }
+                            else
+                            {
+                                validSelection = false;
+                            }
+                        }
+                    }
+                    if (!validSelection)
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Please choose a valid ID.");
+                        AwaitUserInput();
+                    }
                 }
                 catch
                 {
                     Console.Clear();
-                    Console.WriteLine("Please choose a valid ID.");
-                    AwaitUserInput();
-
-                }
-                if (index == -1)
-                {
-                    validSelection = false;
                     Console.WriteLine("Please choose a valid ID.");
                     AwaitUserInput();
                 }
@@ -578,7 +700,6 @@ namespace RecordBookApplication.EntryPoint
 
             studentData[index].AddGrades(subjectData);
             WriteToFile();
-
         }
         private void DeleteGrade() //Deletes grade from specific student
         {
@@ -627,10 +748,17 @@ namespace RecordBookApplication.EntryPoint
             {
                 tw.Write(string.Empty);
             }
-        }        
+        }
         private void ClearSubjectFile() //Clears subject database
         {
             using (TextWriter tw = new StreamWriter(savedSubjects, false))
+            {
+                tw.Write(string.Empty);
+            }
+        }
+        private void ClearStatisticsFile() //Clears statistics database
+        {
+            using (TextWriter tw = new StreamWriter(statisticsData, false))
             {
                 tw.Write(string.Empty);
             }
@@ -662,6 +790,19 @@ namespace RecordBookApplication.EntryPoint
                 }
             }
         }
+        private void WriteToStatisticsFile() //Writes to student Database
+        {
+            ClearStatisticsFile();
+            using (StreamWriter sw = File.AppendText(statisticsData))
+            {
+                for (int i = 0; i < statisticData.Count; i++)
+                {
+                    string points = string.Join(System.Environment.NewLine, statisticData[i].GetPoints());
+                    string userInput = $"{statisticData[i].GetStatisticsID()},{statisticData[i].GetStatisticsType()},{points.Replace(',', '.')}";
+                    sw.WriteLine(userInput);
+                }
+            }
+        }
 
 
         //Sorting mechanisms
@@ -669,7 +810,6 @@ namespace RecordBookApplication.EntryPoint
         {
             string userinput = "";
             bool validSelection = false;
-
 
             while (!validSelection) //Checks which data user wants to sort after
             {
@@ -769,7 +909,6 @@ namespace RecordBookApplication.EntryPoint
             string userInput = "";
             bool validSelection = false;
 
-
             switch (getInfo)
             {
                 case "Subject": //Sorts list after subjects. 
@@ -805,16 +944,287 @@ namespace RecordBookApplication.EntryPoint
                         }
                     }
                     break;
-
             }
-
             return studentData;
         }
 
 
+        //Interacting with statistics
+
+        //Values used by methods
+        private readonly double dash = 0, F = 0, E = 10, D = 12.5, C = 15, B = 17.5, A = 20; //Grade values
+        private double dashCount = 0, fCount = 0, eCount = 0, dCount = 0, cCount = 0, bCount = 0, aCount = 0; //Counts how many grades of each type
+        private void GetLowest()
+        {
+            double studentTotalPoints = 0;
+            double savedStudentPoints = 0;
+            int savedStudentIndex = 0;
+            bool statisticsExists = false;
+
+            List<string> temp;
+
+            if (studentData.Count != 0)
+            {
+                for (int i = 0; i < studentData.Count; i++)
+                {
+                    studentTotalPoints = 0;
+                    for (int j = 0; j < studentData[i].GetGradesForStatistics().Count; j++)
+                    {
+                        temp = studentData[i].GetGradesForStatistics();
+                        foreach (string index in temp)
+                        {
+                            switch (index)
+                            {
+                                case "-": dashCount++; break;
+                                case "F": fCount++; break;
+                                case "E": eCount++; break;
+                                case "D": dCount++; break;
+                                case "C": cCount++; break;
+                                case "B": bCount++; break;
+                                case "A": aCount++; break;
+                            }
+                        }
+                        studentTotalPoints = ((dash * dashCount) + (F * fCount) + (E * eCount) + (D * dCount) + (C * cCount) + (B * bCount) + (A * aCount));
+                        CounterReset();
+                        if (i == 0)
+                        {
+                            savedStudentPoints = studentTotalPoints;
+                            savedStudentIndex = i;
+                        }
+                        else
+                        {
+                            if (studentTotalPoints < savedStudentPoints)
+                            {
+                                savedStudentPoints = studentTotalPoints;
+                                savedStudentIndex = i;
+                            }
+                        }
+                    }
+                }
+                if (statisticData.Count == 0)
+                {
+                    statisticData.Add(new Statistics(1, "LowestGrade", savedStudentPoints));
+                }
+                else
+                {
+                    for (int i = 0; i < statisticData.Count; i++)
+                    {
+                        //Checks if statistics already exists. If so, the statistics will be overwritten.
+                        if (1 == statisticData[i].GetStatisticsID())
+                        {
+                            statisticData.RemoveAt(i);
+                            statisticData.Add(new Statistics(1, "LowestGrade", savedStudentPoints));
+                            statisticsExists = true;
+                        }
+                        //If statistics doesn't exists: writes data to list
+                        else
+                        {
+                            statisticsExists = false;
+                        }
+                        if (!statisticsExists)
+                        {
+                            statisticData.Add(new Statistics(1, "LowestGrade", savedStudentPoints));
+                        }
+                    }
+                }
+                Console.Clear();
+                Console.WriteLine("The student with the lowest grades are:");
+                Console.WriteLine($"{studentData[savedStudentIndex]}\nTotal points: {savedStudentPoints}");
+                WriteToStatisticsFile();
+            }
+            else
+            {
+                Console.Clear();
+                Console.WriteLine("Theres no students saved in database.");
+            }
+        }
+        private void GetHighest()
+        {
+            double studentTotalPoints = 0;
+            double savedStudentPoints = 0;
+            int savedStudentIndex = 0;
+            int ID = 2;
+            List<string> temp;
+            bool statisticsExists = false;
+
+            if (studentData.Count != 0)
+            {
+                for (int i = 0; i < studentData.Count; i++)
+                {
+                    studentTotalPoints = 0;
+                    for (int j = 0; j < studentData[i].GetGradesForStatistics().Count; j++)
+                    {
+                        temp = studentData[i].GetGradesForStatistics();
+                        foreach (string index in temp)
+                        {
+                            switch (index)
+                            {
+                                case "-": dashCount++; break;
+                                case "F": fCount++; break;
+                                case "E": eCount++; break;
+                                case "D": dCount++; break;
+                                case "C": cCount++; break;
+                                case "B": bCount++; break;
+                                case "A": aCount++; break;
+                            }
+                        }
+                        studentTotalPoints = ((dash * dashCount) + (F * fCount) + (E * eCount) + (D * dCount) + (C * cCount) + (B * bCount) + (A * aCount));
+                        CounterReset();
+                        if (i == 0)
+                        {
+                            savedStudentPoints = studentTotalPoints;
+                            savedStudentIndex = i;
+                        }
+                        else
+                        {
+                            if (studentTotalPoints > savedStudentPoints)
+                            {
+                                savedStudentPoints = studentTotalPoints;
+                                savedStudentIndex = i;
+                            }
+                        }
+                    }
+                }
+                if (statisticData.Count == 0)
+                {
+                    statisticData.Add(new Statistics(2, "HighestGrade", savedStudentPoints));
+                }
+                else
+                {
+                    for (int i = 0; i < statisticData.Count; i++)
+                    {
+                        //Checks if statistics already exists. If so, the statistics will be overwritten.
+                        if (ID == statisticData[i].GetStatisticsID())
+                        {
+                            statisticData.RemoveAt(i);
+                            statisticData.Add(new Statistics(ID, "HighestGrade", savedStudentPoints));
+                            statisticsExists = true;
+                            break;
+                        }
+                        //If statistics doesn't exists: writes data to list
+                        else
+                        {
+                            statisticsExists = false;
+                        }
+                        if (!statisticsExists)
+                        {
+                            statisticData.Add(new Statistics(ID, "HighestGRrade", savedStudentPoints));
+                        }
+                    }
+                }
+                Console.Clear();
+                Console.WriteLine("The student with the highest grades are:");
+                Console.WriteLine($"{studentData[savedStudentIndex]}\nTotal points: {savedStudentPoints}");
+                WriteToStatisticsFile();
+            }
+            else
+            {
+                Console.Clear();
+                Console.WriteLine("Theres no students saved in database.");
+            }
+        }
+        private void CalcAverage()
+        {
+            double studentTotalPoints = 0;
+            bool statisticsExists = false;
+
+            List<string> temp;
+
+            if (studentData.Count != 0)
+            {
+                for (int i = 0; i < studentData.Count; i++)
+                {
+                    studentTotalPoints = 0;
+                    for (int j = 0; j < studentData[i].GetGradesForStatistics().Count; j++)
+                    {
+                        temp = studentData[i].GetGradesForStatistics();
+                        foreach (string index in temp)
+                        {
+                            switch (index)
+                            {
+                                case "-": dashCount++; break;
+                                case "F": fCount++; break;
+                                case "E": eCount++; break;
+                                case "D": dCount++; break;
+                                case "C": cCount++; break;
+                                case "B": bCount++; break;
+                                case "A": aCount++; break;
+                            }
+                        }
+                        studentTotalPoints = ((dash * dashCount) + (F * fCount) + (E * eCount) + (D * dCount) + (C * cCount) + (B * bCount) + (A * aCount));
+                    }
+                }
+                if (statisticData.Count == 0)
+                {
+                    statisticData.Add(new Statistics(3, "AverageGrade", Math.Round(studentTotalPoints / studentData.Count, 2)));
+                }
+                else
+                {
+                    for (int i = 0; i < statisticData.Count; i++)
+                    {
+                        //Checks if statistics already exists. If so, the statistics will be overwritten.
+                        if (3 == statisticData[i].GetStatisticsID())
+                        {
+                            statisticData.RemoveAt(i);
+                            statisticData.Add(new Statistics(3, "AverageGrade", Math.Round(studentTotalPoints / studentData.Count, 2)));
+                            statisticsExists = true;
+                            break;
+                        }
+                        //If statistics doesn't exists: writes data to list
+                        else
+                        {
+                            statisticsExists = false;
+                        }
+                    }
+                    if (!statisticsExists)
+                    {
+                        statisticData.Add(new Statistics(3, "AverageGrade", Math.Round(studentTotalPoints / studentData.Count, 2)));
+                    }
+                }
+                Console.Clear();
+                Console.WriteLine("The average grades are:");
+                Console.WriteLine($"Total A: {aCount}\n" +
+                                  $"Total B: {bCount}\n" +
+                                  $"Total C: {cCount}\n" +
+                                  $"Total D: {dCount}\n" +
+                                  $"Total E: {eCount}\n" +
+                                  $"Total F: {fCount}\n" +
+                                  $"Total -: {dashCount}\n" +
+                                  $"Average points: {Math.Round(studentTotalPoints / studentData.Count, 2)}");
+                WriteToStatisticsFile();
+                CounterReset();
+            }
+            else
+            {
+                Console.Clear();
+                Console.WriteLine("Theres no students saved in database.");
+            }
+        }
+        private void CounterReset()
+        {
+            dashCount = 0;
+            fCount = 0;
+            eCount = 0;
+            dCount = 0;
+            cCount = 0;
+            bCount = 0;
+            aCount = 0;
+        }
+
+
+        //Just for fun
+        private void FakeLoading()
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                Console.Write('.');
+                Thread.Sleep(100);
+            }
+            Console.WriteLine();
+        }
+
         /* YET TO IMPLEMENT:
          * Search-function
-         * Calculating statistics
          */
     }
 }

@@ -7,7 +7,7 @@ namespace RecordBookApplication.EntryPoint
         static void Main(string[] args)
         {
             var menu = new Menu();
-            menu.Run();
+            menu.LogIn();
             Console.Clear();
             Console.WriteLine("Press any key to close the program...");
             Console.ReadKey();

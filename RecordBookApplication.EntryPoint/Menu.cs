@@ -122,7 +122,7 @@ namespace RecordBookApplication.EntryPoint
                                 switch (userinput)
                                 {
                                     case "y": validSelection = true; Console.Clear(); break;
-                                    case "n": validSelection = true; credentialsAccepted = false; anotherLogIn = false; Console.Clear(); break;
+                                    case "n": validSelection = true; credentialsAccepted = false; FileEncryption.EncryptUsers(usersDatabase); anotherLogIn = false; Console.Clear(); break;
                                     default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
                                 }
                             } while (!validSelection);

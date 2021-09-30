@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static RecordBookApplication.EntryPoint.Menu;
+using static RecordBookApplication.EntryPoint.Classes;
 
 namespace RecordBookApplication.EntryPoint
 {
@@ -12,7 +14,7 @@ namespace RecordBookApplication.EntryPoint
     {
         private static string subjectsDatabase;
 
-        public static void SubjectsMenu(List<Subjects> subjectData, List<Student> studentData, string _subjectsDatabase)//User UI for subjects
+        public static void SubjectsMenu(List<Subjects> subjectData, List<Classes> classData, string _subjectsDatabase)//User UI for subjects
         {
             subjectsDatabase = _subjectsDatabase;
             string userinput = "";

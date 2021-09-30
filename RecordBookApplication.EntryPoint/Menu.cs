@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Text;
+using static RecordBookApplication.EntryPoint.Classes;
+
 
 namespace RecordBookApplication.EntryPoint
 {
@@ -12,21 +14,25 @@ namespace RecordBookApplication.EntryPoint
         static string[] databases = new string[] {"subjectDatabase.xml", 
                                                   "studentDatabase.xml", 
                                                   "statisticsDatabase.xml", 
-                                                  "usersDatabase.xml" };
+                                                  "usersDatabase.xml",
+                                                  "classesDatabase.xml" };
         string subjectsDatabase = databases[0];
         string studentDatabase = databases[1];
         string statisticsDatabase = databases[2];
         string usersDatabase = databases[3];
+        string classesDatabase = databases[4];
 
         bool userIsAdmin = false;
         bool userIsAuthenticated = false;
 
         //List that stores student data
-        List<Student> studentData = new List<Student>();
+        public static List<Classes> classData { get; set; } = new List<Classes>();
+        
         //List that stores subject data
-        List<Subjects> subjectData = new List<Subjects>();        
+        public static List<Subjects> subjectData { get; set; } = new List<Subjects>();        
+        
         //List that stores statistical data
-        List<Statistics> statisticData = new List<Statistics>();
+        public static List<Statistics> statisticData { get; set; } = new List<Statistics>();
 
         
         public void LogIn() //User log in
@@ -251,6 +257,55 @@ namespace RecordBookApplication.EntryPoint
                     FakeLoading();
                 }
 
+                //Checks if classes database exists
+                //If it exists, data will be written to corresponding lists
+                if (File.Exists(classesDatabase))
+                {
+                    Console.WriteLine("Database containing subjects exists. Loading data...");
+                    FakeLoading();
+                    int error = 0; //Calculates eventually errors
+                    using (StreamReader file = new StreamReader(classesDatabase))
+                    {
+                        int rowsChecked = 0; //Keeps track of how many rows have been checked
+                        int amountOfLines = File.ReadLines(classesDatabase).Count(); //Calculates amount of lines in the txt-file
+
+                        string line;
+                        string[] dataText;
+
+                        for (int Ind = 0; Ind < amountOfLines; Ind++)
+                        {
+                            line = File.ReadLines(classesDatabase).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
+                            rowsChecked++;
+
+                            if (line != null)
+                            {
+                                try
+                                {
+                                    dataText = line.Split(',');
+                                    classData.Add(new Classes(int.Parse(dataText[0]), dataText[1]));
+                                }
+                                catch
+                                {
+                                    error++;
+                                }
+                            }
+                        }
+
+                        if (error != 0)
+                        {
+                            Console.WriteLine("There was a problem when reading the data from the database.");
+                            Console.WriteLine($"Total errors found: {error}");
+                        }
+                    }
+                }
+                //If classes database doesn't exists, a new database is created
+                else
+                {
+                    using (File.Create(classesDatabase)) { };
+                    Console.WriteLine("No subjects database found. Creating new database...");
+                    FakeLoading();
+                }
+
 
                 //Checks if students database exist.
                 //If it exists, data will be written to corresponding lists
@@ -279,36 +334,43 @@ namespace RecordBookApplication.EntryPoint
                                 try
                                 {
                                     dataText = line.Split(','); //Takes in data from txt-file and splits it into an array
-                                    studentData.Add(new Student(int.Parse(dataText[0]), dataText[1], "initiating", subjectData)); //Adds the studentinformation to student-list
-                                    if (dataText.Length < 6)//Checks lenght of array. If amount of indexes is less than fixe, the student only has one grade registered
+                                    for (int i = 0; i < classData.Count; i++)
                                     {
-                                        string temp = $"{dataText[2]},{dataText[3]},{dataText[4]}";
-                                        string[] tempData = temp.Split(',');
-                                        SendGradeData(int.Parse(dataText[0]), tempData);
-                                    }
-                                    else//If multiple grades are registered on the student
-                                    {
-                                        string temp = "";
-                                        int counter = 0;
-                                        int index = 2; //Keeps track of the index-placement in the array
-                                        string[] tempData;
-
-                                        for (int i = 0; i < dataText.Length; i++) //Counts amount of strings stored in the array
+                                        if (dataText[2] == classData[i].className)
                                         {
-                                            counter++;
-                                        }
-                                        int amountOfGrades = (counter - 2) / 3; //Calculates how many grades the student has grades in
-
-                                        for (int i = 0; i < amountOfGrades; i++) //Loop, according to how many grades that is registered
-                                        {
-                                            temp = "";
-                                            for (int j = 0; j < 3; j++) //Loops 3 times, which is the amount of information every grade contains
+                                            classData[i].AddStudentData(int.Parse(dataText[0]), dataText[1], "initiating", subjectData); //Adds the studentinformation to student-list
+                                            if (dataText.Length < 6)//Checks lenght of array. If amount of indexes is less than fixe, the student only has one grade registered
                                             {
-                                                temp += $"{dataText[index]},";
-                                                index++;
+                                                string temp = $"{dataText[2]},{dataText[3]},{dataText[4]}";
+                                                string[] tempData = temp.Split(',');
+                                                SendGradeData(int.Parse(dataText[0]), tempData);
                                             }
-                                            tempData = temp.Split(',');
-                                            SendGradeData(int.Parse(dataText[0]), tempData); //Sends data to grades-list with the correct information.
+                                            else//If multiple grades are registered on the student
+                                            {
+                                                string temp = "";
+                                                int counter = 0;
+                                                int index = 2; //Keeps track of the index-placement in the array
+                                                string[] tempData;
+
+                                                for (int j = 0; j < dataText.Length; j++) //Counts amount of strings stored in the array
+                                                {
+                                                    counter++;
+                                                }
+                                                int amountOfGrades = (counter - 2) / 3; //Calculates how many grades the student has grades in
+
+                                                for (int j = 0; j < amountOfGrades; j++) //Loop, according to how many grades that is registered
+                                                {
+                                                    temp = "";
+                                                    for (int k = 0; k < 3; k++) //Loops 3 times, which is the amount of information every grade contains
+                                                    {
+                                                        temp += $"{dataText[index]},";
+                                                        index++;
+                                                    }
+                                                    tempData = temp.Split(',');
+                                                    SendGradeData(int.Parse(dataText[0]), tempData); //Sends data to grades-list with the correct information.
+                                                }
+                                            }
+
                                         }
                                     }
                                 }
@@ -330,7 +392,6 @@ namespace RecordBookApplication.EntryPoint
 
                     }
                 }
-
                 //If student database doesn't exists, creates a new database
                 else
                 {
@@ -372,8 +433,8 @@ namespace RecordBookApplication.EntryPoint
                 userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "1": StudentsManager.StudentsMenu(studentData, subjectData, studentDatabase); break;
-                    case "2": SubjectsManager.SubjectsMenu(subjectData, studentData, subjectsDatabase); break;
+                    case "1": StudentsManager.StudentsMenu(); break;
+                    case "2": SubjectsManager.SubjectsMenu(subjectData, classData, subjectsDatabase); break;
                     case "3": StatisticsMechanisms.StatisticsMenu(studentData, statisticData, statisticsDatabase); break;
                     case "4": SortingMechanisms.SortMenu(studentData); break;
                     case "0": FileEncryption.EncryptAllFiles(databases); break;
@@ -408,8 +469,8 @@ namespace RecordBookApplication.EntryPoint
 
                 switch (userInput)
                 {
-                    case "1": StudentsManager.StudentsMenu(studentData, subjectData, studentDatabase); break;
-                    case "2": SubjectsManager.SubjectsMenu(subjectData, studentData, subjectsDatabase); break;
+                    case "1": StudentsManager.StudentsMenu(); break;
+                    case "2": SubjectsManager.SubjectsMenu(subjectData, classData, subjectsDatabase); break;
                     case "3": StatisticsMechanisms.StatisticsMenu(studentData, statisticData, statisticsDatabase); break;
                     case "4": SortingMechanisms.SortMenu(studentData); break;
                     case "5": StudentsManager.AddRandomStudent(studentData, subjectData, studentDatabase); break;
@@ -448,7 +509,7 @@ namespace RecordBookApplication.EntryPoint
         }
 
 
-        //Methods for interacting with grades
+        //Methods for interacting with students
         public static string ConvertGradesToString(List<string> grades)//Prints grades
         {
             string text = "";
@@ -677,7 +738,7 @@ namespace RecordBookApplication.EntryPoint
         }
 
 
-        //User interactions
+        //Users interactions
         private bool ValidateCredentials(string username, string password) //Validates user input credentials
         {
             byte[] hashedCredentials = new byte[20];

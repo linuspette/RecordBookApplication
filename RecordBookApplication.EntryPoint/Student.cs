@@ -8,12 +8,15 @@ namespace RecordBookApplication.EntryPoint
     {
         public int ID { get; set; }
         public string name { get; set; }
+        public string studentClass { get; set; }
+
         private List<Grades> grades = new List<Grades>();
 
-        public Student(int _id, string _name, string command, List<Subjects> subjectData)
+        public Student(int _id, string _name, string _studentClass, string command, List<Subjects> subjectData)
         {
-            ID = _id;
-            name = _name;
+            this.ID = _id;
+            this.name = _name;
+            this.studentClass = _studentClass;
             if (command == "notRandom")
             {
                 AddGrades(subjectData);

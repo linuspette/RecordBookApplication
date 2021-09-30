@@ -4,17 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static RecordBookApplication.EntryPoint.Menu;
+using static RecordBookApplication.EntryPoint.Classes;
 
 namespace RecordBookApplication.EntryPoint
 {
-    public class StudentsManager
+    public class StudentsManager : Menu
     {
 
         private static string studentsDatabase;
 
-        public static void StudentsMenu(List<Student> studentData, List<Subjects> subjectData, string _studentsDatabase)//User UI for stundents
+        public static void StudentsMenu()//User UI for stundents
         {
-            studentsDatabase = _studentsDatabase;
             string userinput = "";
 
             while (userinput != "0")
@@ -90,7 +91,7 @@ namespace RecordBookApplication.EntryPoint
             string name = Console.ReadLine();
 
 
-            studentData.Add(new Student(ID, name, "notRandom", subjectData)); //Adds the data to the List
+            studentData.Add(new Student(ID, name, AddStudentToRandomClass(),"notRandom", subjectData)); //Adds the data to the List
             int index = studentData.FindIndex(a => a.GetID() == ID);
             string userInput = $"{ID},{name},{string.Join(System.Environment.NewLine, studentData[index].GetGrades())}";
 
@@ -137,7 +138,7 @@ namespace RecordBookApplication.EntryPoint
                 string name = names[rng.Next(0, 4)]; //Randomizes name from array
 
                 //Adds data to list
-                studentData.Add(new Student(ID, name, "Random", subjectData));
+                studentData.Add(new Student(ID, name, AddStudentToRandomClass(), "Random", subjectData));
                 int index = studentData.FindIndex(a => a.GetID() == ID);
                 string userInput = $"{ID},{name},{string.Join(System.Environment.NewLine, studentData[index].GetGrades())}";
 

@@ -6,8 +6,8 @@ namespace RecordBookApplication.EntryPoint
 {
     public class Student
     {
-        private int ID;
-        private string name;
+        public int ID { get; set; }
+        public string name { get; set; }
         private List<Grades> grades = new List<Grades>();
 
         public Student(int _id, string _name, string command, List<Subjects> subjectData)

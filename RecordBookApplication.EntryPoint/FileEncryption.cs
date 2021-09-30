@@ -34,10 +34,114 @@ namespace RecordBookApplication.EntryPoint
         }
 
         //User interaction
-        public static void Encrypt(string inputFile, string password)
+        public static void Encrypt(string[] databases)
         {
-            FileEncrypt(inputFile, password);
-        }        
+            bool validSelection = false;
+            string inputFile = string.Empty;
+
+            do
+            {
+                Console.WriteLine("Please choose which database to encrypt:");
+                for (int i = 0; i < databases.Length-1; i++)
+                {
+                    Console.WriteLine($"{i+1} - {databases[i]}");
+                }
+                try
+                {
+                    int userInput = int.Parse(Console.ReadLine());
+                    inputFile = databases[userInput - 1];
+                    validSelection = true;
+                }
+                catch
+                {
+                    validSelection = false;
+                    Console.WriteLine("Please choose a valid option.");
+                }
+            } while (!validSelection);
+
+            try
+            {
+                if (inputFile != string.Empty)
+                {
+                    FileEncrypt(inputFile, _password);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Error while encrypting files.");
+            }
+        }
+        public static void DeCrypt(string[] databases)
+        {
+            bool validSelection = false;
+            string inputFile = string.Empty;
+
+            do
+            {
+                Console.WriteLine("Please choose which database to encrypt:");
+                for (int i = 0; i < databases.Length - 1; i++)
+                {
+                    Console.WriteLine($"{i + 1} - {databases[i]}");
+                }
+                try
+                {
+                    int userInput = int.Parse(Console.ReadLine());
+                    inputFile = databases[userInput - 1];
+                    validSelection = true;
+                }
+                catch
+                {
+                    validSelection = false;
+                    Console.WriteLine("Please choose a valid option.");
+                }
+            } while (!validSelection);
+
+            try
+            {
+                if (inputFile != string.Empty)
+                {
+                    FileDecrypt($"{inputFile}.aes", inputFile, _password);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Error while encrypting files.");
+            }
+        }
+
+        public static void EncryptUsers(string usersDatabase)
+        {
+            try
+            {
+                if (usersDatabase != string.Empty)
+                {
+                    FileEncrypt(usersDatabase, _password);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Error while encrypting files.");
+            }
+        }
+        public static void DeCryptUsers(string usersDatabase)
+        {
+            string inputFile = string.Empty;
+
+            try
+            {
+                if (inputFile != string.Empty)
+                {
+                    FileDecrypt($"{inputFile}.aes", inputFile, _password);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("No encrypted files detected");
+            }
+        }
+
+
+        //Encrypts/decrypts all files
         public static void EncryptAllFiles(string[] databases)
         {
             for (int i = 0; i < databases.Length-1; i++)
@@ -51,10 +155,6 @@ namespace RecordBookApplication.EntryPoint
             {
                 FileDecrypt($"{databases[i]}.aes",databases[i], _password);
             }
-        }
-        public static void DeCrypt(string inputFile, string outputFile, string password)
-        {
-            FileDecrypt(inputFile, outputFile, password);
         }
 
         //Methods that handle cryptation

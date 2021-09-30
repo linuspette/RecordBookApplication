@@ -28,14 +28,15 @@ namespace RecordBookApplication.EntryPoint
         //List that stores statistical data
         List<Statistics> statisticData = new List<Statistics>();
 
-        //User log in
-        public void LogIn()
+        
+        public void LogIn() //User log in
         {
             string userinput = "";
             bool credentialsAccepted = false;
             bool validSelection = false;
             bool anotherLogIn = true;
 
+            FileEncryption.DeCryptUsers(usersDatabase);
             //Checks if users database exist.
             if (File.Exists(usersDatabase))
             {
@@ -76,61 +77,76 @@ namespace RecordBookApplication.EntryPoint
                     string usernameInput = string.Empty;
                     var passwordInput = string.Empty;
 
-
                     Console.Clear();
-                    Console.WriteLine("Please enter administrator credentials:");
-                    Console.Write("Username: ");
+                    Console.WriteLine(" -- Type \"0\" if you want to close the application --  ");
+                    Console.WriteLine("\tPlease enter your credentials:");
+                    Console.Write("\tUsername: ");
                     usernameInput = Console.ReadLine();
-                    Console.Write("Password: ");
-                    passwordInput = MaskedReadLine();
-                    Console.WriteLine();
 
-                    credentialsAccepted = ValidateCredentials(usernameInput, passwordInput);
-
-                    //If credentials are accepted, Admin panel will execute
-                    if (credentialsAccepted == true)
+                    if (usernameInput != "0")
                     {
-                        Run();
-                        do
+
+                        Console.Write("\tPassword: ");
+                        passwordInput = MaskedReadLine();
+                        Console.WriteLine();
+
+                        credentialsAccepted = ValidateCredentials(usernameInput, passwordInput);
+
+                        //If credentials are accepted, Admin panel will execute
+                        if (credentialsAccepted == true)
+                        {
+                            Run();
+                            ClearLists();
+
+                            do
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Do you want to log in to another account? y/n");
+                                userinput = Console.ReadLine();
+                                switch (userinput)
+                                {
+                                    case "y": validSelection = true; credentialsAccepted = false; Console.Clear(); anotherLogIn = true; break;
+                                    case "n": validSelection = true; Console.Clear(); anotherLogIn = false; break;
+                                    default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                                }
+                            } while (!validSelection);
+                        }
+                        else
                         {
                             Console.Clear();
-                            Console.WriteLine("Do you want to log in to another account? y/n");
-                            userinput = Console.ReadLine();
-                            switch (userinput)
+                            Console.WriteLine("The credentials that you have entered is invalid.");
+                            do
                             {
-                                case "y": validSelection = true; credentialsAccepted = false; Console.Clear(); anotherLogIn = true; break;
-                                case "n": validSelection = true; Console.Clear(); anotherLogIn = false; break;
-                                default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
-                            }
-                        } while (!validSelection);
+                                Console.WriteLine("Do you want to try again? y/n");
+                                userinput = Console.ReadLine();
+                                switch (userinput)
+                                {
+                                    case "y": validSelection = true; Console.Clear(); break;
+                                    case "n": validSelection = true; credentialsAccepted = false; anotherLogIn = false; Console.Clear(); break;
+                                    default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
+                                }
+                            } while (!validSelection);
+                        }
                     }
                     else
                     {
                         Console.Clear();
-                        Console.WriteLine("The credentials that you have entered is invalid.");
-                        do
-                        {
-                            Console.WriteLine("Do you want to try again? y/n");
-                            userinput = Console.ReadLine();
-                            switch (userinput)
-                            {
-                                case "y": validSelection = true; Console.Clear(); break;
-                                case "n": validSelection = true; Console.Clear(); break;
-                                default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
-                            }
-                        } while (!validSelection);
-
+                        FileEncryption.EncryptUsers(usersDatabase);
+                        anotherLogIn = false;
                     }
+                    
                 }
 
             } while (anotherLogIn);
-
         }
 
         private void Run() //Initiates program and loads data from databases
         {
             if (userIsAuthenticated)
             {
+                Console.Clear();
+                Console.WriteLine(" --USER AUTHENTICATED-- \n");
+                Thread.Sleep(1500);
                 Console.WriteLine("Looking for existing databases...");
                 FakeLoading();
                 FileEncryption.DeCryptAllFiles(databases);
@@ -348,8 +364,6 @@ namespace RecordBookApplication.EntryPoint
         {
             string userinput = "";
             Console.Clear();
-            Console.WriteLine("Credentials accepted");
-            Thread.Sleep(1500);
 
             while (userinput != "0")
             {
@@ -385,8 +399,6 @@ namespace RecordBookApplication.EntryPoint
             string userInput = string.Empty;
 
             Console.Clear();
-            Console.WriteLine("Credentials accepted");
-            Thread.Sleep(1500);
 
             while (userInput != "0")
             {
@@ -406,8 +418,9 @@ namespace RecordBookApplication.EntryPoint
                     case "8": DeleteAllStudentData(); break;
                     case "9": DeleteAllSubjectData(); break;
                     case "10": DeleteAllStatisticsData(); break;
-                    case "11": FileEncryption.Encrypt(studentDatabase, "123"); break;
-                    case "12": FileEncryption.DeCrypt($"{studentData}.aes", studentDatabase, "123"); break;
+                    case "11": FileEncryption.Encrypt(databases); break;
+                    case "12": FileEncryption.DeCrypt(databases); break;
+                    case "13": SearchEngine.SearchMenu(studentData); break;
                     case "0": FileEncryption.EncryptAllFiles(databases); break;
                     default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
                 }
@@ -429,6 +442,8 @@ namespace RecordBookApplication.EntryPoint
             Console.WriteLine("8 - Delete all student data");
             Console.WriteLine("9 - Delete all subject data");
             Console.WriteLine("10 - Delete all statistics data");
+            Console.WriteLine("11 - Encrypt database");
+            Console.WriteLine("12 - Decrypt database");
             Console.WriteLine("\n0 - Return to main menu\n");
         }
 
@@ -661,6 +676,7 @@ namespace RecordBookApplication.EntryPoint
 
         }
 
+
         //User interactions
         private bool ValidateCredentials(string username, string password) //Validates user input credentials
         {
@@ -674,7 +690,7 @@ namespace RecordBookApplication.EntryPoint
 
             if (File.Exists(usersDatabase))
             {
-                Console.WriteLine("Checking Credentials");
+                Console.WriteLine("\nChecking Credentials");
                 FakeLoading();
                 int error = 0; //Calculates eventually errors
                 using (StreamReader file = new StreamReader(usersDatabase))
@@ -745,7 +761,7 @@ namespace RecordBookApplication.EntryPoint
 
             return validation;
         }
-        private string MaskedReadLine() //Masks user input
+        public static string MaskedReadLine() //Masks user input
         {
             var password = string.Empty;
             ConsoleKey key;
@@ -787,14 +803,22 @@ namespace RecordBookApplication.EntryPoint
             Console.ReadKey();
             Console.Clear();
         }
-
+        public void EncryptAllFiles() //Encrypts all files
+        {
+            FileEncryption.EncryptAllFiles(databases);
+            FileEncryption.EncryptUsers(usersDatabase);
+        }
+        private void ClearLists()
+        {
+            studentData.Clear();
+            subjectData.Clear();
+            statisticData.Clear();
+        }
 
         /* YET TO IMPLEMENT:
-         * Search-function
-         * User based system for logging in
-         * Permissions for teachers, so they can only acces specific classes
-         * Specific UI for teachers and administrators
-         * LogIn screen
+         * Permissions for teachers, so they can only access specific classes
+         * SQL-Implementation
+         * 
          */
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using static RecordBookApplication.EntryPoint.Menu;
 
 namespace RecordBookApplication.EntryPoint
 {
@@ -8,36 +9,29 @@ namespace RecordBookApplication.EntryPoint
     {
         public int ID { get; set; }
         public string name { get; set; }
-        public string studentClass { get; set; }
+
+        public string studentsClass { get; set; }
 
         private List<Grades> grades = new List<Grades>();
 
-        public Student(int _id, string _name, string _studentClass, string command, List<Subjects> subjectData)
+        public Student(int _id, string _name, string _studentClass, string command)
         {
             this.ID = _id;
             this.name = _name;
-            this.studentClass = _studentClass;
+            this.studentsClass = _studentClass;
             if (command == "notRandom")
             {
-                AddGrades(subjectData);
+                AddGrades();
             }
             if (command == "Random")
             {
-                RandomizeGrades(subjectData);
+                RandomizeGrades();
             }
             if (command == "initiating")
             {
                 //In case I need to add something on startup
             }
 
-        }
-        public int GetID() //Gives UserID
-        {
-            return ID;
-        }
-        public string GetName() //Gives user Name
-        {
-            return name;
         }
         public void ReceiveGradeData(List<Grades> _grades)
         {
@@ -47,7 +41,7 @@ namespace RecordBookApplication.EntryPoint
         {
             grades.Add(new Grades(gradeID, subject, grade));
         }
-        public void AddGrades(List<Subjects> subjectData) //Lets user add grades to the specific ID
+        public void AddGrades() //Lets user add grades to the specific ID
         {
             string[] acceptedGrades = new string[] { "A", "B", "C", "D", "E", "F", "-" };
             bool validSelection = false;
@@ -62,14 +56,6 @@ namespace RecordBookApplication.EntryPoint
             bool gradeExists = true;
 
             int gradeID = rng.Next(11111, 99999); //Randomizes userID. 
-
-            if (subjectData.Count == 0)
-            {
-                Console.Clear();
-                Console.WriteLine("There's no subjects available.\nAdd a subject via the main menu first.");
-                Thread.Sleep(2000);
-                tryAgain = "n";
-            }
 
             if (grades.Count != 0)
             {
@@ -263,7 +249,7 @@ namespace RecordBookApplication.EntryPoint
                 FakeLoading();
             }
         }
-        public void RandomizeGrades(List<Subjects> subjectData) //Adds a randomized grade to specific ID
+        public void RandomizeGrades() //Adds a randomized grade to specific ID
         {
 
             string[] _grades = new string[] { "A", "B", "C", "D", "E", "F", "-" }; //Array that contains valid grades
@@ -351,17 +337,7 @@ namespace RecordBookApplication.EntryPoint
         }
         public override string ToString() //Formats string
         {
-            return string.Format($"ID: {ID} \nNamn: {name} \n{PrintGrades()}-----------------------------------------\n");
+            return string.Format($"Elev: {name} \n{PrintGrades()}-----------------------------------------\n");
         }
-        public static void FakeLoading()
-        {
-            for (int i = 0; i < 20; i++)
-            {
-                Console.Write('.');
-                Thread.Sleep(50);
-            }
-            Console.WriteLine();
-        }
-
     }
 }

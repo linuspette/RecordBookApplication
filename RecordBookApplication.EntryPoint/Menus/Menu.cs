@@ -11,21 +11,23 @@ namespace RecordBookApplication.EntryPoint
 {
     public class Menu
     {
-        static string[] databases = new string[] {"subjectDatabase.xml", 
-                                                  "studentDatabase.xml", 
-                                                  "statisticsDatabase.xml", 
-                                                  "usersDatabase.xml",
-                                                  "classesDatabase.xml" };
-        string subjectsDatabase = databases[0];
-        string studentDatabase = databases[1];
-        string statisticsDatabase = databases[2];
-        string usersDatabase = databases[3];
-        string classesDatabase = databases[4];
+        public static string[] databases { get; private set; } = new string[] {"subjectDatabase.xml",
+                                                                               "studentDatabase.xml",
+                                                                               "statisticsDatabase.xml",
+                                                                               "classesDatabase.xml",
+                                                                               "usersDatabase.xml"};
+        public static readonly string subjectsDatabase = databases[0];
+        public static readonly string studentDatabase = databases[1];
+        public static readonly string statisticsDatabase = databases[2];
+        public static readonly string classesDatabase = databases[3];
+        public static readonly string usersDatabase = databases[4];
 
-        bool userIsAdmin = false;
+        private static bool userIsAdmin { get; set; }
         bool userIsAuthenticated = false;
 
-        //List that stores student data
+        //List that stores logged in users access codes
+        public static List<string> userAccessCodes { get; private set; } = new List<string>();
+        //List that stores class data
         public static List<Classes> classData { get; set; } = new List<Classes>();
         
         //List that stores subject data
@@ -42,7 +44,7 @@ namespace RecordBookApplication.EntryPoint
             bool validSelection = false;
             bool anotherLogIn = true;
 
-            FileEncryption.DeCryptUsers(usersDatabase);
+            FileEncryption.DeCryptUsers();
             //Checks if users database exist.
             if (File.Exists(usersDatabase))
             {
@@ -78,10 +80,18 @@ namespace RecordBookApplication.EntryPoint
 
             do
             {
+                //Decrypts file if its encrypted
+                if (File.Exists($"{usersDatabase}.aes"))
+                {
+                    FileEncryption.DeCryptUsers();
+                }
+
                 while (!credentialsAccepted && userinput != "n" && anotherLogIn == true)
                 {
                     string usernameInput = string.Empty;
                     var passwordInput = string.Empty;
+                    userIsAdmin = false;
+
 
                     Console.Clear();
                     Console.WriteLine(" -- Type \"0\" if you want to close the application --  ");
@@ -137,7 +147,7 @@ namespace RecordBookApplication.EntryPoint
                     else
                     {
                         Console.Clear();
-                        FileEncryption.EncryptUsers(usersDatabase);
+                        FileEncryption.EncryptUsers();
                         anotherLogIn = false;
                     }
                     
@@ -155,7 +165,7 @@ namespace RecordBookApplication.EntryPoint
                 Thread.Sleep(1500);
                 Console.WriteLine("Looking for existing databases...");
                 FakeLoading();
-                FileEncryption.DeCryptAllFiles(databases);
+                FileEncryption.DeCryptAllFiles();
 
                 //Checks if subjects database exist.
                 //If it exists, data will be written to corresponding lists
@@ -282,7 +292,7 @@ namespace RecordBookApplication.EntryPoint
                                 try
                                 {
                                     dataText = line.Split(',');
-                                    classData.Add(new Classes(int.Parse(dataText[0]), dataText[1]));
+                                    classData.Add(new Classes(int.Parse(dataText[0]), dataText[1], dataText[2]));
                                 }
                                 catch
                                 {
@@ -310,6 +320,7 @@ namespace RecordBookApplication.EntryPoint
                 //Checks if students database exist.
                 //If it exists, data will be written to corresponding lists
                 if (File.Exists(studentDatabase))
+
                 {
                     Console.WriteLine("Database containing students exists. Loading data...");
                     int error = 0; //Calculates eventually errors
@@ -338,10 +349,10 @@ namespace RecordBookApplication.EntryPoint
                                     {
                                         if (dataText[2] == classData[i].className)
                                         {
-                                            classData[i].AddStudentData(int.Parse(dataText[0]), dataText[1], "initiating", subjectData); //Adds the studentinformation to student-list
-                                            if (dataText.Length < 6)//Checks lenght of array. If amount of indexes is less than fixe, the student only has one grade registered
+                                            classData[i].AddStudentData(int.Parse(dataText[0]), dataText[1], dataText[2], "initiating"); //Adds the studentinformation to student-list
+                                            if (dataText.Length < 7)//Checks lenght of array. If amount of indexes is less than fixe, the student only has one grade registered
                                             {
-                                                string temp = $"{dataText[2]},{dataText[3]},{dataText[4]}";
+                                                string temp = $"{dataText[3]},{dataText[4]},{dataText[5]}";
                                                 string[] tempData = temp.Split(',');
                                                 SendGradeData(int.Parse(dataText[0]), tempData);
                                             }
@@ -433,11 +444,12 @@ namespace RecordBookApplication.EntryPoint
                 userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "1": StudentsManager.StudentsMenu(); break;
-                    case "2": SubjectsManager.SubjectsMenu(subjectData, classData, subjectsDatabase); break;
-                    case "3": StatisticsMechanisms.StatisticsMenu(studentData, statisticData, statisticsDatabase); break;
-                    case "4": SortingMechanisms.SortMenu(studentData); break;
-                    case "0": FileEncryption.EncryptAllFiles(databases); break;
+                    case "1": ClassesManager.ClassesManagerMenu(); break;
+                    case "2": StudentsManager.StudentsMenu(); break;
+                    case "3": SubjectsManager.SubjectsMenu(); break;
+                    case "4": StatisticsMechanisms.StatisticsMenu(); break;
+                    case "5": SortingMechanisms.SortMenu(); break;
+                    case "0": FileEncryption.EncryptAllFiles(); break; //Encrypts all files before user logs out
                     default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
                 }
             }
@@ -446,13 +458,14 @@ namespace RecordBookApplication.EntryPoint
         {
             Console.Clear();
             Console.WriteLine(" ---- MENU ---- ");
-            Console.WriteLine($"\n - Amount of Students: {studentData.Count} -");
+            Console.WriteLine($"\n - Amount of classes: {classData.Count} -\n");
+            Console.WriteLine($" - Amount of Students: {studentData.Count} -");
             Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n\n");
             Console.WriteLine("1 - Run Students Manager");
             Console.WriteLine("2 - Subjects Manager");
             Console.WriteLine("3 - Open Statistics");
             Console.WriteLine("4 - Sort data");
-            Console.WriteLine("\n0 - Close program\n");
+            Console.WriteLine("\n0 - Log out\n");
         }
 
         private void AdminMenu()
@@ -467,22 +480,25 @@ namespace RecordBookApplication.EntryPoint
 
                 userInput = Console.ReadLine();
 
+
                 switch (userInput)
                 {
-                    case "1": StudentsManager.StudentsMenu(); break;
-                    case "2": SubjectsManager.SubjectsMenu(subjectData, classData, subjectsDatabase); break;
-                    case "3": StatisticsMechanisms.StatisticsMenu(studentData, statisticData, statisticsDatabase); break;
-                    case "4": SortingMechanisms.SortMenu(studentData); break;
-                    case "5": StudentsManager.AddRandomStudent(studentData, subjectData, studentDatabase); break;
-                    case "6": SubjectsManager.AddRandomSubject(subjectData, subjectsDatabase); break;
-                    case "7": CreateUser("Create a new user:"); break;
-                    case "8": DeleteAllStudentData(); break;
-                    case "9": DeleteAllSubjectData(); break;
-                    case "10": DeleteAllStatisticsData(); break;
-                    case "11": FileEncryption.Encrypt(databases); break;
-                    case "12": FileEncryption.DeCrypt(databases); break;
-                    case "13": SearchEngine.SearchMenu(studentData); break;
-                    case "0": FileEncryption.EncryptAllFiles(databases); break;
+                    case "1": ClassesManager.ClassesManagerMenu(); break;
+                    case "2": StudentsManager.StudentsMenu(); break;
+                    case "3": SubjectsManager.SubjectsMenu(); break;
+                    case "4": StatisticsMechanisms.StatisticsMenu(); break;
+                    case "5": SortingMechanisms.SortMenu(); break;
+                    case "6": ClassesManager.AddRandomClass(); break;
+                    case "7": StudentsManager.AddRandomStudent(); break;
+                    case "8": SubjectsManager.AddRandomSubject(); break;
+                    case "9": CreateUser("Create a new user:"); break;
+                    case "10": DeleteAllStudentData(); break;
+                    case "11": DeleteAllSubjectData(); break;
+                    case "12": DeleteAllStatisticsData(); break;
+                    case "13": FileEncryption.EncryptionMenu(); break;
+                    case "14": SearchEngine.SearchMenu(studentData); break;
+                    case "15": AddAccesToUser(); break;
+                    case "0": FileEncryption.EncryptAllFiles(); break; //Encrypts all files before user logs out
                     default: Console.WriteLine("Not a valid option. Try again."); AwaitUserInput(); break;
                 }
             }
@@ -491,21 +507,25 @@ namespace RecordBookApplication.EntryPoint
         {
             Console.Clear();
             Console.WriteLine(" ---- ADMIN PANEL ---- \n");
-            Console.WriteLine($"\n - Amount of Students: {studentData.Count} -");
+            Console.WriteLine($"\n - Amount of classes: {classData.Count} -\n");
+            Console.WriteLine($" - Amount of Students: {studentData.Count} -");
             Console.WriteLine($" - Amount of Subjects: {subjectData.Count} -\n");
-            Console.WriteLine("1 - Run Students Manager");
-            Console.WriteLine("2 - Subjects Manager");
-            Console.WriteLine("3 - Open Statistics");
-            Console.WriteLine("4 - Sort data");
-            Console.WriteLine("5 - Add random student");
-            Console.WriteLine("6 - Add random subject");
-            Console.WriteLine("7 - Create new user");
-            Console.WriteLine("8 - Delete all student data");
-            Console.WriteLine("9 - Delete all subject data");
-            Console.WriteLine("10 - Delete all statistics data");
-            Console.WriteLine("11 - Encrypt database");
-            Console.WriteLine("12 - Decrypt database");
-            Console.WriteLine("\n0 - Return to main menu\n");
+            Console.WriteLine("1 - Run Classes Manager");
+            Console.WriteLine("2 - Run Students Manager");
+            Console.WriteLine("3 - Run Subjects Manager");
+            Console.WriteLine("4 - Open Statistics");
+            Console.WriteLine("5 - Sort data");
+            Console.WriteLine("6 - Add random class");
+            Console.WriteLine("7 - Add random student");
+            Console.WriteLine("8 - Add random subject");
+            Console.WriteLine("9 - Create new user");
+            Console.WriteLine("10 - Delete all student data");
+            Console.WriteLine("11 - Delete all subject data");
+            Console.WriteLine("12 - Delete all statistics data");
+            Console.WriteLine("13 - Encrypt database");
+            Console.WriteLine("14 - Decrypt database");
+            Console.WriteLine("15 - Run Search Engine");
+            Console.WriteLine("\n0 - Log out\n");
         }
 
 
@@ -526,9 +546,9 @@ namespace RecordBookApplication.EntryPoint
             }
             return text;
         }
-        private void SendGradeData(int ID, string[] gradeData) //Sends stored Gradedata to the corresponding list
+        private static void SendGradeData(int ID, string[] gradeData) //Sends stored Gradedata to the corresponding list
         {
-            int index = studentData.FindIndex(a => a.GetID() == ID);
+            int index = studentData.FindIndex(a => a.ID == ID);
 
             studentData[index].AddGradesOnStartUp(int.Parse(gradeData[0]), gradeData[1], gradeData[2]);
         }
@@ -544,7 +564,7 @@ namespace RecordBookApplication.EntryPoint
                 string userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "y": validSelection = true; subjectData.Clear(); StudentsManager.ClearStudentsFile(studentDatabase); Console.Clear(); break;
+                    case "y": validSelection = true; subjectData.Clear(); StudentsManager.ClearStudentsFile(); Console.Clear(); break;
                     case "n": validSelection = true; Console.Clear(); break;
                     default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
                 }
@@ -559,7 +579,7 @@ namespace RecordBookApplication.EntryPoint
                 string userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "y": validSelection = true; studentData.Clear(); SubjectsManager.ClearSubjectFile(subjectsDatabase); Console.Clear(); break;
+                    case "y": validSelection = true; studentData.Clear(); SubjectsManager.ClearSubjectFile(); Console.Clear(); break;
                     case "n": validSelection = true; Console.Clear(); break;
                     default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
                 }
@@ -574,7 +594,7 @@ namespace RecordBookApplication.EntryPoint
                 string userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "y": validSelection = true; statisticData.Clear(); StatisticsMechanisms.ClearStatisticsFile(statisticsDatabase); Console.Clear(); break;
+                    case "y": validSelection = true; statisticData.Clear(); StatisticsMechanisms.ClearStatisticsFile(); Console.Clear(); break;
                     case "n": validSelection = true; Console.Clear(); break;
                     default: Console.Clear(); Console.WriteLine("Please enter a valid option."); validSelection = false; break;
                 }
@@ -725,7 +745,7 @@ namespace RecordBookApplication.EntryPoint
                     Console.WriteLine();
                     using (StreamWriter sw = File.AppendText(usersDatabase))
                     {
-                            string userInput = $"{ID},{userType},{Convert.ToBase64String(Hash.GetSHA1(username, password1))}";
+                            string userInput = $"{ID},{userType},{username},{Convert.ToBase64String(Hash.GetSHA1(username, password1))}";
                             sw.WriteLine(userInput);
                     }
                 }
@@ -735,6 +755,143 @@ namespace RecordBookApplication.EntryPoint
         private void ConfigureUsers()
         {
 
+        }
+        private void AddAccesToUser()
+        {
+
+            bool validSelection = false;
+
+            string userName = string.Empty;
+            string accesCode = string.Empty;
+
+            List<string> tempData = new List<string>();
+
+            //Reads userdatabase and writes it into memory
+            using (StreamReader sw = new StreamReader(usersDatabase))
+            {
+                int rowsChecked = 0; //Keeps track of how many rows have been checked
+                int amountOfLines = File.ReadLines(usersDatabase).Count(); //Calculates amount of lines in the txt-file
+
+                string line;
+
+                for (int Ind = 0; Ind < amountOfLines; Ind++)
+                {
+                    line = File.ReadLines(usersDatabase).Skip(rowsChecked).Take(1).First(); //Selects the row from txt-file that should be read
+                    rowsChecked++;
+
+                    if (line != null)
+                    {
+                        try
+                        {
+                            tempData.Add(new string(line));
+
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Error");
+                        }
+                    }
+                }
+
+            }
+            string[] dataText = null;
+
+            do
+            {
+                //Let's user select which user to add info to
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("Choose which user you want to add class access to: ");
+                    Console.WriteLine("You can choose by typing either username or ID.");
+
+                for (int i = 0; i < tempData.Count; i++)
+                {
+                    string line = tempData[i];
+                    dataText = line.Split(',');
+                    if (dataText[1] != "admin")
+                    {
+                        Console.WriteLine($"{i+1} - User:{dataText[2]} ID: {dataText[0]}");
+                    }
+                }
+                    string userInput = Console.ReadLine();
+                    for (int i = 0; i < tempData.Count; i++)
+                    {
+                        if (tempData[i].Contains(userInput))
+                        {
+                            userName = userInput;
+                            validSelection = true;
+                            break;
+                        }
+                        else
+                        {
+                            validSelection = false;
+                            Console.WriteLine("Please choose a option.");
+                        }
+                    }
+                } while (!validSelection);
+
+                //Let's user select which access code to add to the user
+                do
+                {
+                    Console.Clear();
+                    Console.WriteLine("Please enter the aproriate access code:");
+                    for (int i = 0; i < classData.Count; i++)
+                    {
+                        Console.WriteLine($"{classData[i].className} - Access Code:{classData[i].accesCode}");
+                    }
+                    string userInput = Console.ReadLine();
+                    for (int i = 0; i < classData.Count; i++)
+                    {
+                        if (userInput == classData[i].accesCode)
+                        {
+                            accesCode = userInput;
+                            validSelection = true;
+                            break;
+                        }
+                        else
+                        {
+                            validSelection = false;
+                            Console.WriteLine("Please choose a option.");
+                        }
+                    }
+                } while (!validSelection);
+
+            } while (!validSelection);
+            int index = -1;
+            try
+            {
+                index = tempData.FindIndex(a => a.Contains(userName));
+                if (dataText.Length > 5)
+                {
+                    for (int i = 5; i < dataText.Length; i++)
+                    {
+                        accesCode += $",{dataText[i]}";
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+
+
+            if (index != -1)
+            {
+                dataText = tempData[index].Split(',');
+                tempData.RemoveAt(index);
+                tempData.Add(new string($"{dataText[0]},{dataText[1]},{dataText[2]},{dataText[3]}, {accesCode}"));
+            }
+
+            using (StreamWriter sw = File.AppendText(usersDatabase))
+            {
+                sw.Write(string.Empty);
+                foreach (var i in tempData)
+                {
+                    sw.WriteLine(i);
+                }
+                tempData.Clear();
+            }
         }
 
 
@@ -779,7 +936,7 @@ namespace RecordBookApplication.EntryPoint
                                 try
                                 {
                                     dataText = line.Split(',');
-                                    string temp = dataText[2];
+                                    string temp = dataText[3];
                                     userType = dataText[1];
                                     hashedCredentials = Convert.FromBase64String(temp);
                                 }
@@ -846,16 +1003,20 @@ namespace RecordBookApplication.EntryPoint
 
             return password;
         }
+        public static bool IsUserAdmin()
+        {
+            return userIsAdmin;
+        }
 
 
         //Extra code that makes the work easier
-        private void FakeLoading()
+        public static void FakeLoading()
         {
-            for (int i = 0; i < 20; i++)
+           /*for (int i = 0; i < 20; i++)
             {
                 Console.Write('.');
                 Thread.Sleep(75);
-            }
+            }*/
             Console.WriteLine();
         }
         public static void AwaitUserInput() //Awaits user input before continuing. Clears console
@@ -866,8 +1027,8 @@ namespace RecordBookApplication.EntryPoint
         }
         public void EncryptAllFiles() //Encrypts all files
         {
-            FileEncryption.EncryptAllFiles(databases);
-            FileEncryption.EncryptUsers(usersDatabase);
+            FileEncryption.EncryptAllFiles();
+            FileEncryption.EncryptUsers();
         }
         private void ClearLists()
         {
@@ -877,9 +1038,9 @@ namespace RecordBookApplication.EntryPoint
         }
 
         /* YET TO IMPLEMENT:
-         * Permissions for teachers, so they can only access specific classes
+         * Permissions for teachers, so they can only access specific classes FIX THIS
          * SQL-Implementation
-         * 
+         * GUI
          */
     }
 }

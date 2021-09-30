@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static RecordBookApplication.EntryPoint.Menu;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace RecordBookApplication.EntryPoint
@@ -19,7 +20,7 @@ namespace RecordBookApplication.EntryPoint
         private static string _password = "turbobananer";
 
         //Creates random salt
-        public static byte[] GenereateRandomSalt()
+        private static byte[] GenereateRandomSalt()
         {
             byte[] data = new byte[32];
             using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
@@ -34,7 +35,11 @@ namespace RecordBookApplication.EntryPoint
         }
 
         //User interaction
-        public static void Encrypt(string[] databases)
+        public static void EncryptionMenu()
+        {
+
+        }        
+        public static void EncryptionMenuEncrypt()
         {
             bool validSelection = false;
             string inputFile = string.Empty;
@@ -42,9 +47,9 @@ namespace RecordBookApplication.EntryPoint
             do
             {
                 Console.WriteLine("Please choose which database to encrypt:");
-                for (int i = 0; i < databases.Length-1; i++)
+                for (int i = 0; i < databases.Length - 1; i++)
                 {
-                    Console.WriteLine($"{i+1} - {databases[i]}");
+                    Console.WriteLine($"{i + 1} - {databases[i]}");
                 }
                 try
                 {
@@ -70,8 +75,8 @@ namespace RecordBookApplication.EntryPoint
             {
                 Console.WriteLine("Error while encrypting files.");
             }
-        }
-        public static void DeCrypt(string[] databases)
+        }        
+        public static void EncryptionMenuDecrypt()
         {
             bool validSelection = false;
             string inputFile = string.Empty;
@@ -109,30 +114,31 @@ namespace RecordBookApplication.EntryPoint
             }
         }
 
-        public static void EncryptUsers(string usersDatabase)
+        public static void Encrypt(string dataBase)
+        {
+            FileEncrypt(dataBase, _password);
+        }
+        public static void DeCrypt(string dataBase)
+        {
+            FileDecrypt($"{dataBase}.aes", dataBase, _password);
+        }
+
+        public static void EncryptUsers( )
         {
             try
             {
-                if (usersDatabase != string.Empty)
-                {
-                    FileEncrypt(usersDatabase, _password);
-                }
+                FileEncrypt(usersDatabase, _password);
             }
             catch
             {
                 Console.WriteLine("Error while encrypting files.");
             }
         }
-        public static void DeCryptUsers(string usersDatabase)
+        public static void DeCryptUsers( )
         {
-            string inputFile = string.Empty;
-
             try
             {
-                if (inputFile != string.Empty)
-                {
-                    FileDecrypt($"{inputFile}.aes", inputFile, _password);
-                }
+                FileDecrypt($"{usersDatabase}.aes", usersDatabase, _password);
             }
             catch
             {
@@ -142,14 +148,14 @@ namespace RecordBookApplication.EntryPoint
 
 
         //Encrypts/decrypts all files
-        public static void EncryptAllFiles(string[] databases)
+        public static void EncryptAllFiles()
         {
             for (int i = 0; i < databases.Length-1; i++)
             {
                 FileEncrypt(databases[i], _password);
             }
         }        
-        public static void DeCryptAllFiles(string[] databases)
+        public static void DeCryptAllFiles()
         {
             for (int i = 0; i < databases.Length-1; i++)
             {
@@ -265,9 +271,9 @@ namespace RecordBookApplication.EntryPoint
                 }
                 finally
                 {
+                    File.Delete(inputFile);
                     fsOut.Close();
                     fsCrypt.Close();
-                    File.Delete(inputFile);
                 }
             }
             catch

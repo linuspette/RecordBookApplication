@@ -12,30 +12,27 @@ namespace RecordBookApplication.EntryPoint
 {
     public class SubjectsManager
     {
-        private static string subjectsDatabase;
-
-        public static void SubjectsMenu(List<Subjects> subjectData, List<Classes> classData, string _subjectsDatabase)//User UI for subjects
+        public static void SubjectsMenu()//User UI for subjects
         {
-            subjectsDatabase = _subjectsDatabase;
             string userinput = "";
 
             while (userinput != "0")
             {
-                PrintSubjectsMenu(subjectData);
+                PrintSubjectsMenu();
 
                 userinput = Console.ReadLine();
 
                 switch (userinput)
                 {
-                    case "1": AddSubject(subjectData); Menu.AwaitUserInput(); break;
-                    case "2": DeleteSubject(subjectData, studentData); Menu.AwaitUserInput(); break;
-                    case "3": PrintSubjects(subjectData); Menu.AwaitUserInput(); break;
+                    case "1": AddSubject(); Menu.AwaitUserInput(); break;
+                    case "2": DeleteSubject(); Menu.AwaitUserInput(); break;
+                    case "3": PrintSubjects(); Menu.AwaitUserInput(); break;
                     case "0": break;
                     default: Console.WriteLine("Not a valid option. Try again."); Menu.AwaitUserInput(); break;
                 }
             }
         }
-        private static void PrintSubjectsMenu(List<Subjects> subjectData)
+        private static void PrintSubjectsMenu()
         {
             Console.Clear();
             Console.WriteLine(" ---- SUBJECTS MANAGER ---- \n");
@@ -45,7 +42,7 @@ namespace RecordBookApplication.EntryPoint
             Console.WriteLine("3 - Show all subjects");
             Console.WriteLine("\n0 - Return to main menu\n");
         }
-        private static void PrintSubjects(List<Subjects> subjectData)//Prints the list containing subjects in console
+        private static void PrintSubjects()//Prints the list containing subjects in console
         {
             Console.Clear();
             foreach (var i in subjectData)
@@ -53,7 +50,7 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine($"-{i}-");
             }
         }
-        private static void AddSubject(List<Subjects> subjectData)//Adds a subject
+        private static void AddSubject()//Adds a subject
         {
             Random rng = new Random();
             Console.WriteLine("Enter the name of the Subject:");
@@ -97,16 +94,15 @@ namespace RecordBookApplication.EntryPoint
             if (!subjectExists)
             {
                 subjectData.Add(new Subjects(ID, addSubject));
-                WriteToSubjectFile(subjectData);
+                WriteToSubjectFile();
             }
             else
             {
                 Console.WriteLine("Subject already exists.");
             }
         }
-        public static void AddRandomSubject(List<Subjects> subjectData, string _subjectsDatabase)//Adds a subject
+        public static void AddRandomSubject()//Adds a subject
         {
-            subjectsDatabase = _subjectsDatabase;
             Console.Clear();
             Random rng = new Random();
             string addSubject = "";
@@ -118,7 +114,7 @@ namespace RecordBookApplication.EntryPoint
             int error = 0;
 
             Console.Write($"Creating subject");
-            Student.FakeLoading();
+            FakeLoading();
             int ID = rng.Next(11111, 99999);
 
             if (subjectData.Count != 0)
@@ -162,7 +158,7 @@ namespace RecordBookApplication.EntryPoint
             if (!subjectExists)
             {
                 subjectData.Add(new Subjects(ID, addSubject));
-                WriteToSubjectFile(subjectData);
+                WriteToSubjectFile();
             }
             else
             {
@@ -174,7 +170,7 @@ namespace RecordBookApplication.EntryPoint
                 Thread.Sleep(2000);
             }
         }
-        private static void DeleteSubject(List<Subjects> subjectData, List<Student> studentData) //Deletes a subject
+        private static void DeleteSubject() //Deletes a subject
         {
             int ID = 0;
             bool validSelection = false;
@@ -191,7 +187,7 @@ namespace RecordBookApplication.EntryPoint
                 try
                 {
                     ID = int.Parse(Console.ReadLine());
-                    index = studentData.FindIndex(a => a.GetID() == ID);
+                    index = studentData.FindIndex(a => a.ID == ID);
                     validSelection = true;
                 }
                 catch
@@ -209,9 +205,9 @@ namespace RecordBookApplication.EntryPoint
             } while (!validSelection);
 
             subjectData.RemoveAt(index);
-            WriteToSubjectFile(subjectData);
+            WriteToSubjectFile();
         }
-        public static int GetSubjectListLenght(List<Subjects> subjectData)
+        public static int GetSubjectListLenght()
         {
             return subjectData.Count;
         }
@@ -219,16 +215,16 @@ namespace RecordBookApplication.EntryPoint
 
         //File I/O
 
-        public static void ClearSubjectFile(string _subjectDatabase) //Clears subject database
+        public static void ClearSubjectFile() //Clears subject database
         {
-            using (TextWriter tw = new StreamWriter(_subjectDatabase, false))
+            using (TextWriter tw = new StreamWriter(subjectsDatabase, false))
             {
                 tw.Write(string.Empty);
             }
         }
-        private static void WriteToSubjectFile(List<Subjects> subjectData) //Writes to subject Database
+        private static void WriteToSubjectFile() //Writes to subject Database
         {
-            ClearSubjectFile(subjectsDatabase);
+            ClearSubjectFile();
             using (StreamWriter sw = File.AppendText(subjectsDatabase))
             {
                 for (int i = 0; i < subjectData.Count; i++)

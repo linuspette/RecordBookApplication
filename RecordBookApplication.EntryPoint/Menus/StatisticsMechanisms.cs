@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static RecordBookApplication.EntryPoint.Menu;
+using static RecordBookApplication.EntryPoint.Classes;
 
 namespace RecordBookApplication.EntryPoint
 {
@@ -11,13 +13,10 @@ namespace RecordBookApplication.EntryPoint
     {
         private static readonly double dash = 0, F = 0, E = 10, D = 12.5, C = 15, B = 17.5, A = 20; //Grade values
         private static double dashCount = 0, fCount = 0, eCount = 0, dCount = 0, cCount = 0, bCount = 0, aCount = 0; //Counts how many grades of each type
-        private static string statisticsDatabase;
-
 
         //Statistics menu
-        public static void StatisticsMenu(List<Student> studentData, List<Statistics> statisticData, string _statisticsDatabase)//User UI for statistics
+        public static void StatisticsMenu()//User UI for statistics
         {
-            statisticsDatabase = _statisticsDatabase;
             string userinput = "";
 
             while (userinput != "0")
@@ -27,10 +26,10 @@ namespace RecordBookApplication.EntryPoint
                 userinput = Console.ReadLine();
                 switch (userinput)
                 {
-                    case "1": PrintStatistics(statisticData); Menu.AwaitUserInput(); break;
-                    case "2": GetLowest(studentData, statisticData); Menu.AwaitUserInput(); break;
-                    case "3": GetHighest(studentData, statisticData); Menu.AwaitUserInput(); break;
-                    case "4": CalcAverage(studentData, statisticData); Menu.AwaitUserInput(); break;
+                    case "1": PrintStatistics(); Menu.AwaitUserInput(); break;
+                    case "2": GetLowest(); Menu.AwaitUserInput(); break;
+                    case "3": GetHighest(); Menu.AwaitUserInput(); break;
+                    case "4": CalcAverage(); Menu.AwaitUserInput(); break;
                     case "0": break;
                     default: Console.WriteLine("Not a valid option. Try again."); Menu.AwaitUserInput(); break;
                 }
@@ -46,7 +45,7 @@ namespace RecordBookApplication.EntryPoint
             Console.WriteLine("4 - Show the average grades");
             Console.WriteLine("\n0 - Return to main menu\n");
         }
-        public static void PrintStatistics(List<Statistics> statisticData)//Prints the list containing statistics in console
+        public static void PrintStatistics()//Prints the list containing statistics in console
         {
             foreach (var i in statisticData)
             {
@@ -56,7 +55,7 @@ namespace RecordBookApplication.EntryPoint
 
 
         //Interacting with statistics
-        private static void GetLowest(List<Student> studentData, List<Statistics> statisticData) //Gets the student with the lowest grades
+        private static void GetLowest() //Gets the student with the lowest grades
         {
             double studentTotalPoints = 0;
             double savedStudentPoints = 0;
@@ -132,7 +131,7 @@ namespace RecordBookApplication.EntryPoint
                 Console.Clear();
                 Console.WriteLine("The student with the lowest grades are:");
                 Console.WriteLine($"{studentData[savedStudentIndex]}\nTotal points: {savedStudentPoints}");
-                WriteToStatisticsFile(statisticData);
+                WriteToStatisticsFile();
             }
             else
             {
@@ -140,7 +139,7 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine("Theres no students saved in database.");
             }
         }
-        private static void GetHighest(List<Student> studentData, List<Statistics> statisticData) //Gets the student with the highest grades
+        private static void GetHighest() //Gets the student with the highest grades
         {
             double studentTotalPoints = 0;
             double savedStudentPoints = 0;
@@ -217,7 +216,7 @@ namespace RecordBookApplication.EntryPoint
                 Console.Clear();
                 Console.WriteLine("The student with the highest grades are:");
                 Console.WriteLine($"{studentData[savedStudentIndex]}\nTotal points: {savedStudentPoints}");
-                WriteToStatisticsFile(statisticData);
+                WriteToStatisticsFile();
             }
             else
             {
@@ -225,7 +224,7 @@ namespace RecordBookApplication.EntryPoint
                 Console.WriteLine("Theres no students saved in database.");
             }
         }
-        private static void CalcAverage(List<Student> studentData, List<Statistics> statisticData) //Gets the average grades of all students
+        private static void CalcAverage() //Gets the average grades of all students
         {
             double studentTotalPoints = 0;
             bool statisticsExists = false;
@@ -293,7 +292,7 @@ namespace RecordBookApplication.EntryPoint
                                   $"Total F: {fCount}\n" +
                                   $"Total -: {dashCount}\n" +
                                   $"Average points: {Math.Round(studentTotalPoints / studentData.Count, 2)}");
-                WriteToStatisticsFile(statisticData);
+                WriteToStatisticsFile();
                 CounterReset();
             }
             else
@@ -314,16 +313,16 @@ namespace RecordBookApplication.EntryPoint
         }
 
         //File I/O
-        public static void ClearStatisticsFile(string _statisticsDatabase) //Clears statistics database
+        public static void ClearStatisticsFile() //Clears statistics database
         {
-            using (TextWriter tw = new StreamWriter(_statisticsDatabase, false))
+            using (TextWriter tw = new StreamWriter(statisticsDatabase, false))
             {
                 tw.Write(string.Empty);
             }
         }
-        private static void WriteToStatisticsFile(List<Statistics> statisticData) //Writes to student Database
+        private static void WriteToStatisticsFile() //Writes to student Database
         {
-            ClearStatisticsFile(statisticsDatabase);
+            ClearStatisticsFile();
             using (StreamWriter sw = File.AppendText(statisticsDatabase))
             {
                 for (int i = 0; i < statisticData.Count; i++)
